@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP TB62747AFG,C8,EL
+D 16-Ch Constant Current LED Driver 45mA, 26V, SSOP24 1.00mm pitch Package
+K
+F https://www.arrow.com/en/products/tb62747afg-oc8el/toshiba
+$ENDCMP
+#
+#End Doc Library
