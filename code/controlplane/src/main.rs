@@ -2,29 +2,34 @@
 #![no_main]
 #![feature(type_alias_impl_trait, generic_const_exprs, iter_array_chunks)]
 
-use core::arch::asm;
-use core::pin::pin;
-use core::sync::atomic::AtomicBool;
-
 use defmt::*;
-use embassy_executor::{Executor, Spawner, InterruptExecutor};
-use embassy_stm32::rcc::{Hse, Sysclk, PllSource, Pll, PllPreDiv, AHBPrescaler, APBPrescaler};
-use embassy_stm32::time::Hertz;
-use embassy_stm32::{interrupt, Config as STM32Config};
+use embassy_executor::{Executor, InterruptExecutor, Spawner};
 use embassy_stm32::interrupt::{InterruptExt, Priority};
-use embassy_stm32::peripherals::{PB9, PB8};
-use embassy_stm32::{gpio::{Level, Input, Output, Speed, Pull}, peripherals::*};
-use embassy_time::{Timer, Ticker, Duration, Instant};
-use futures::Future;
-use futures::{poll};
+use embassy_stm32::pac::dma::regs::Ndtr;
+use embassy_stm32::pac::gpio::regs::Bsrr;
+use embassy_stm32::pac::timer::regs::Arr16;
+use embassy_stm32::peripherals::{PB8, PB9, TIM1};
+use embassy_stm32::rcc::low_level::RccPeripheral;
+use embassy_stm32::rcc::{AHBPrescaler, APBPrescaler};
+use embassy_stm32::timer::low_level::Basic16bitInstance;
+use embassy_stm32::timer::low_level::CaptureCompare16bitInstance;
+use embassy_stm32::timer::low_level::GeneralPurpose16bitInstance;
+use embassy_stm32::timer::Channel;
+use embassy_stm32::timer::{CountingMode, OutputCompareMode};
+use embassy_stm32::{
+    gpio::{Level, Output, Pull, Speed},
+    peripherals::*,
+};
+use embassy_stm32::{interrupt, pac, Config as STM32Config};
+use embassy_time::Timer;
 use led::LedIntensity;
 use led_driver::LedDriver;
 use static_cell::StaticCell;
 use {defmt_rtt as _, panic_probe as _};
 
-mod shift_register;
 mod led;
 mod led_driver;
+mod shift_register;
 
 static EXECUTOR_BLINK: InterruptExecutor = InterruptExecutor::new();
 static EXECUTOR_LS: StaticCell<Executor> = StaticCell::new();
@@ -36,33 +41,38 @@ unsafe fn USART2() {
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
-    let p = {
+    let mut p = {
         let mut config: STM32Config = Default::default();
 
         config.enable_debug_during_sleep = false;
 
-        config.rcc.hsi = false;
-        config.rcc.hse = Some(Hse{
-            freq: Hertz::mhz(25),
-            mode: embassy_stm32::rcc::HseMode::Oscillator,
-        });
-        config.rcc.sys = Sysclk::PLL1_P;
-        config.rcc.pll_src = PllSource::HSE;
-        config.rcc.pll = Some(Pll{
-            prediv: PllPreDiv::DIV25,
-            mul: embassy_stm32::rcc::PllMul::MUL336,
-            divp: Some(embassy_stm32::rcc::PllPDiv::DIV4),
-            divq: Some(embassy_stm32::rcc::PllQDiv::DIV7),
-            divr: None,
-        });
-        config.rcc.ahb_pre = AHBPrescaler::DIV1;
-        config.rcc.apb1_pre = APBPrescaler::DIV2;
-        config.rcc.apb2_pre = APBPrescaler::DIV1;
+        // config.rcc.hsi = false;
+        // config.rcc.hse = Some(Hse{
+        //     freq: Hertz::mhz(25),
+        //     mode: embassy_stm32::rcc::HseMode::Oscillator,
+        // });
+        // config.rcc.sys = Sysclk::PLL1_P;
+        // config.rcc.pll_src = PllSource::HSE;
+        // config.rcc.pll = Some(Pll{
+        //     prediv: PllPreDiv::DIV25,
+        //     mul: embassy_stm32::rcc::PllMul::MUL336,
+        //     divp: Some(embassy_stm32::rcc::PllPDiv::DIV4),
+        //     divq: Some(embassy_stm32::rcc::PllQDiv::DIV7),
+        //     divr: None,
+        // });
+        // config.rcc.ahb_pre = AHBPrescaler::DIV1;
+        // config.rcc.apb1_pre = APBPrescaler::DIV2;
+        // config.rcc.apb2_pre = APBPrescaler::DIV1;
+
+        // very slow clock to demo the counter in a human readable speed
+        config.rcc.ahb_pre = AHBPrescaler::DIV4;
+        config.rcc.apb1_pre = APBPrescaler::DIV16;
+        config.rcc.apb2_pre = APBPrescaler::DIV16;
 
         embassy_stm32::init(config)
     };
 
-    let mut led = Output::new(p.PC13, Level::High, Speed::Low);
+    let mut led = Output::new(p.PC13, Level::High, Speed::VeryHigh);
 
     // Right-side daughterboard LED control
     let sck_r = Output::new(p.PA0, Level::Low, Speed::Low);
@@ -79,12 +89,13 @@ async fn main(_spawner: Spawner) {
     let l_nen1 = Output::new(p.PA7, Level::Low, Speed::Low);
     let l_nen2 = Output::new(p.PB0, Level::Low, Speed::Low);
     // Left-side daughterboard sensors
-    let btn_warn = Input::new(p.PB2, Pull::Down);
-    let btn_volume = Input::new(p.PB10, Pull::Down);
+    // let btn_warn = Input::new(p.PB2, Pull::Down);
+    // let btn_volume = Input::new(p.PB10, Pull::Down);
 
     // Center daughterboard LED control
     let mut sck_ls = Output::new(p.PB15, Level::Low, Speed::Low);
-    let mut sin_ls = Output::new(p.PA8, Level::Low, Speed::Low);
+    // (&p.PA8).set_as_af(p.PA8.af_num(), AFType::OutputPushPull);
+    // let mut sin_ls = Output::new(p.PA8, Level::Low, Speed::Low);
     let mut lat_ls = Output::new(p.PA9, Level::Low, Speed::Low);
     let ls1_nen = Output::new(p.PB9, Level::Low, Speed::Low);
     let ls2_nen = Output::new(p.PB8, Level::Low, Speed::Low);
@@ -109,8 +120,8 @@ async fn main(_spawner: Spawner) {
     // let executor = EXECUTOR_LS.init(Executor::new());
     // executor.run(|s| s.spawn(run_ls2(sck_ls, sin_ls, lat_ls, ls1_nen, ls2_nen)).unwrap());
 
-    send_bits(&mut sck_ls, &mut sin_ls, [Level::Low; 32]).await;
-    trigger_lat(&mut lat_ls).await;
+    // send_bits(&mut sck_ls, &mut sin_ls, [Level::Low; 32]).await;
+    // trigger_lat(&mut lat_ls).await;
     // Timer::after_secs(1).await;
 
     // let mut driver = LedDriver::<_, _, _, 2, 2, 5>::new(sck_ls, sin_ls, lat_ls, [ls1_nen.degrade(), ls2_nen.degrade()]);
@@ -130,35 +141,211 @@ async fn main(_spawner: Spawner) {
     // loop {
     //     driver.display_cycle_test().await;
     // }
-    let mut a: i32 = 0;
-    let mut b: i32 = 0;
-    led.set_high();
-    Timer::after_millis(1000).await;
-    led.set_low();
-    Timer::after_millis(1000).await;
-    loop {
-        led.toggle();
-        unsafe {
-            // wait for 4000*1000=4_000_000 instructions
-            // when no other code is running, the LED toggles every ~.5s?
-            asm!(
-                "MOV  {0}, #0", // Initialize the counter
-                "2:",
-                "ADD  {0}, {0}, #1", // Increment it
 
-                "MOV  {1}, #0", // Initialize the counter
-                "3:",
-                "ADD  {1}, {1}, #1", // Increment it
-                "CMP  {1}, #4000", // Check the limit
-                "BLE  3b", // Continue looping if not finished
-                ";",
-                "CMP  {0}, #1000", // Check the limit
-                "BLE  2b", // Continue looping if not finished
-                ";",
-                inout(reg) a, inout(reg) b,
-                options(pure, nomem, nostack),
-            );
-        }
+    let pb11 = Output::new(p.PB11, Level::Low, Speed::Low);
+    let pb12 = Output::new(p.PB12, Level::Low, Speed::Low);
+    let pb13 = Output::new(p.PB13, Level::Low, Speed::Low);
+    let pb14 = Output::new(p.PB14, Level::Low, Speed::Low);
+    let pb2 = Output::new(p.PB2, Level::Low, Speed::Low);
+    let pb10 = Output::new(p.PB10, Level::Low, Speed::Low);
+
+    // Hello world of GPIOB
+    pac::GPIOB.bsrr().write_value(Bsrr(0x0000FFFF));
+    // pac::GPIOB.bsrr().write(|w| w.0 = 0x0000FFFF);
+    // pac::GPIOB.bsrr().write(|w| {
+    //     for i in 0..16 {
+    //         w.set_bs(i, true);
+    //     }
+    //     for i in 0..16 {
+    //         w.set_br(i, false);
+    //     }
+    // });
+    Timer::after_secs(1).await;
+    pac::GPIOB.bsrr().write_value(Bsrr(0xFFFF0000));
+    // pac::GPIOB.bsrr().write(|w| w.0 = 0xFFFF0000);
+    // pac::GPIOB.bsrr().write(|w| {
+    //     for i in 0..16 {
+    //         w.set_bs(i, false);
+    //     }
+    //     for i in 0..16 {
+    //         w.set_br(i, true);
+    //     }
+    // });
+    Timer::after_millis(100).await;
+
+    // References:
+    // - https://embassy.dev/dev/layer_by_layer.html
+    // - https://www.st.com/resource/en/datasheet/stm32f401cc.pdf (DS9716, block diagram, AF mappings)
+    // - https://www.st.com/resource/en/reference_manual/rm0368-stm32f401xbc-and-stm32f401xde-advanced-armbased-32bit-mcus-stmicroelectronics.pdf (RM0368, registers)
+
+    // GPIO
+    // Alternate Function pins are configured in the Embassy HAL by declaring a PwmPin.
+    // It works, but there's more AFs than PWM. Embassy just exposes one AF so hence the naming I guess.
+    //
+    // Embassy HAL has an internal function to set any AF mode on a pin. It could basically consist of
+    // declaring an Input/Output::new() and running set_as_af(). Alas, the function is private.
+    //
+    // The commented HAL code and the uncommented registry writes are equivalent.
+
+    // let ch1 = PwmPin::new_ch1(p.PA8, OutputType::PushPull);
+    pac::RCC.ahb1enr().modify(|w| w.set_gpioaen(true));
+    pac::GPIOA.bsrr().write(|w| w.set_br(8, true));
+    pac::GPIOA.afr(8 / 8).modify(|w| {
+        w.set_afr(8 % 8, 0x01);
+    });
+    pac::GPIOA.otyper().modify(|w| {
+        w.set_ot(8, pac::gpio::vals::Ot::PUSHPULL);
+    });
+    pac::GPIOA.pupdr().modify(|w| {
+        w.set_pupdr(8, Pull::None.into());
+        // w.set_pupdr(8, pac::gpio::vals::Pupdr::FLOATING);
+    });
+    pac::GPIOA.moder().modify(|w| {
+        w.set_moder(8, pac::gpio::vals::Moder::ALTERNATE);
+    });
+    pac::GPIOA.ospeedr().modify(|w| {
+        w.set_ospeedr(8, pac::gpio::vals::Ospeedr::VERYHIGHSPEED);
+    });
+
+    // Timer
+    // The Embassy HAL can do almost all we need.
+    //
+    // The uncommented HAL code and the commented registry writes under it are equivalent.
+    // Although the HAL code should be preferred where possible, the subtle errata for
+    // enable_and_reset() should demonstrate why.
+
+    TIM1::enable_and_reset();
+    // pac::RCC.apb2enr().modify(|w| w.set_tim1en(true));
+    // // // Errata: ES0005 - 2.1.11 Delay after an RCC peripheral clock enabling
+    // // // only for stm32f2
+    // // cortex_m::asm::dsb();
+    // pac::RCC.apb2rstr().modify(|w| w.set_syscfgrst(true));
+    // pac::RCC.apb2rstr().modify(|w| w.set_syscfgrst(false));
+
+    p.TIM1.set_counting_mode(CountingMode::EdgeAlignedUp);
+    // pac::TIM1.cr1().modify(|w| {
+    //     // w.set_cen(false);
+    //     let (cms, dir) = CountingMode::EdgeAlignedUp.into();
+    //     w.set_dir(dir);
+    //     w.set_cms(cms);
+    // });
+
+    // p.TIM1.set_frequency(Hertz(2));
+    pac::TIM1.psc().write(|w| w.set_psc(16_000 - 1)); // prescaler
+    pac::TIM1.arr().write_value(Arr16(16 - 1)); // counter period
+    pac::TIM1.egr().write(|w| {
+        w.set_ug(true);
+    });
+    pac::TIM1.cr1().modify(|w| {
+        w.set_urs(pac::timer::vals::Urs::ANYEVENT);
+    });
+
+    p.TIM1.start();
+    // pac::TIM1.cr1().modify(|r| r.set_cen(true));
+
+    p.TIM1.enable_outputs();
+    // pac::TIM1.bdtr().modify(|w| w.set_moe(true));
+
+    p.TIM1.set_output_compare_mode(Channel::Ch1, OutputCompareMode::Toggle);
+    // pac::TIM1.ccmr_output(0).write(|ccmr| {
+    //     ccmr.set_ocm(0, OutputCompareMode::Toggle.into());
+    //     // ccmr.set_ocm(0, pac::timer::vals::Ocm::TOGGLE);
+    // });
+
+    p.TIM1.enable_channel(Channel::Ch1, true);
+    // pac::TIM1.ccer().modify(|w| {
+    //     w.set_cce(Channel::Ch1.raw(), true);
+    // });
+
+    // Extra stuff from Cube HAL code not found in Embassy HAL.
+    //
+    // The only required registry write here is connecting the timer and DMA controller.
+    // It is missing in the Embassy HAL.
+    pac::TIM1.dier().modify(|dier| {
+        dier.set_ude(true); // enable DMA on TIM1_UP
+    });
+    // The others are default values, or not used in timing calculations.
+    pac::TIM1.cr1().modify(|cr1| {
+        cr1.set_ckd(pac::timer::vals::Ckd::DIV1); // internal clock division
+        cr1.set_arpe(true); // auto-reload preload
+        cr1.set_opm(pac::timer::vals::Opm::DISABLED); // one pulse mode
+        cr1.set_udis(false); // update enable
+    });
+    pac::TIM1.cr2().modify(|cr2| {
+        cr2.set_ccpc(false); // TRGO master/slave mode
+        cr2.set_mms(pac::timer::vals::Mms::UPDATE); // TRGO trigger event selection
+        // cr2.set_ccus(true); // capture/control update
+        cr2.set_ccds(pac::timer::vals::Ccds::ONCOMPARE);
+    });
+    // pac::TIM1.egr().write(|w| {
+    //     w.set_ug(true); // update generation
+    // });
+    pac::TIM1.dier().modify(|dier| {
+        dier.set_ude(true); // enable DMA on TIM1_UP
+    });
+    pac::TIM1.ccmr_output(0).modify(|ccmr| {
+        // ccmr.set_ccs(0, pac::timer::vals::CcmrOutputCcs::OUTPUT); // output compare is output
+        ccmr.set_ocpe(0, pac::timer::vals::Ocpe::DISABLED); // output compare preload enable
+    });
+    // pac::TIM1.ccr(0).modify(|ccr| {
+    //     ccr.set_ccr(0); // compare value
+    // });
+    // pac::TIM1.rcr().write_value(Rcr(0)); // repetition counter
+
+    // Demo value buffer to use for DMA.
+    // Uses the BSRR to set and reset outputs to step over and enable each GPIOB pin one by one.
+    let mut bsrr_values = [0u32; 16];
+    for i in 0..bsrr_values.len() {
+        let prev_i = if i == 0 { 15 } else { i - 1 };
+        // bsrr_values[i] = (0x01 << (prev_i + 16)) | (0x01 << i);
+        let mut b = Bsrr::default();
+        b.set_br(prev_i, true);
+        b.set_bs(i, true);
+        bsrr_values[i] = b.0;
+    }
+
+    // DMA
+    // Embassy HAL is not used here. This code is purely made by setting up the project in
+    // CubeIDE and seeing what the generated code does.
+
+    // MX_DMA_Init
+    // __HAL_RCC_DMA2_CLK_ENABLE();
+    pac::RCC.ahb1enr().modify(|w| {
+        // w.set_dma1en(true);
+        w.set_dma2en(true);
+    });
+    // HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 0, 0);
+    pac::Interrupt::DMA2_STREAM5.set_priority(Priority::P0);
+    pac::DMA2.st(5).cr().modify(|w| {
+        // w.set_en(false);
+        w.set_chsel(6);
+        w.set_circ(pac::dma::vals::Circ::ENABLED); // circular mode
+        // w.set_ct(pac::dma::vals::Ct::MEMORY0); // double buffer bank select
+        w.set_dbm(pac::dma::vals::Dbm::DISABLED); // double buffer mode
+        w.set_dir(pac::dma::vals::Dir::MEMORYTOPERIPHERAL);
+        w.set_minc(pac::dma::vals::Inc::INCREMENTED); // memory increment
+        w.set_pinc(pac::dma::vals::Inc::FIXED); // peripheral not incrumented
+        w.set_msize(pac::dma::vals::Size::BITS32); // memory size = word
+        w.set_psize(pac::dma::vals::Size::BITS32);
+        w.set_mburst(pac::dma::vals::Burst::SINGLE); // no bursting
+        w.set_pburst(pac::dma::vals::Burst::SINGLE);
+        w.set_pfctrl(pac::dma::vals::Pfctrl::DMA); // DMA sets flow
+        w.set_pl(pac::dma::vals::Pl::HIGH); // priority
+        w.set_tcie(true); // done interrupt enable
+        w.set_teie(true); // error interrupt enable
+    });
+
+    // Done in CubeIDE, breaks everything here.
+    // pac::DMA2.ifcr(5).write_value(Ixr(0)); // clear all interrupt flags
+
+    pac::DMA2.st(5).ndtr().write_value(Ndtr(16)); // stream this many values
+    pac::DMA2.st(5).m0ar().write_value(bsrr_values.as_ptr() as u32); // source address
+    pac::DMA2.st(5).par().write_value(pac::GPIOB.bsrr().as_ptr() as u32); // destination address
+    pac::DMA2.st(5).cr().modify(|w| w.set_en(true)); // enable
+
+    // Busy loop required
+    loop {
+        Timer::after_millis(500).await;
     }
 
     // let executor = EXECUTOR_LS.init(Executor::new());
@@ -257,7 +444,7 @@ async fn run_ls2(
 async fn run_ls(
     mut sck: Output<'static, PB15>,
     mut sin: Output<'static, PA8>,
-    mut lat: Output<'static, PA9>
+    mut lat: Output<'static, PA9>,
 ) {
     // init with all LEDs off
     send_bits(&mut sck, &mut sin, [Level::Low; 32]).await;
@@ -284,11 +471,10 @@ async fn run_ls(
     }
 }
 
-
 async fn send_bits<const N: usize>(
     sck: &mut Output<'static, PB15>,
     sin: &mut Output<'static, PA8>,
-    levels: [Level; N]
+    levels: [Level; N],
 ) {
     for l in levels {
         sin.set_level(l);
