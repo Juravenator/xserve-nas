@@ -68,46 +68,47 @@ async fn main(_spawner: Spawner) {
         embassy_stm32::init(config)
     };
 
-    let mut led = Output::new(p.PC13, Level::High, Speed::VeryHigh);
+    let mut led = Output::new(p.PC13, Level::High, Speed::Low);
 
     // Right-side daughterboard LED control
-    let sck_r = Output::new(p.PA0, Level::Low, Speed::Low);
-    let sin_r = Output::new(p.PA1, Level::Low, Speed::Low);
-    let lat_r = Output::new(p.PA2, Level::Low, Speed::Low);
-    let r_nen = Output::new(p.PA3, Level::Low, Speed::Low);
+    let sck_r = Output::new(p.PA0, Level::Low, Speed::VeryHigh);
+    let sin_r = Output::new(p.PA1, Level::Low, Speed::VeryHigh);
+    let lat_r = Output::new(p.PA2, Level::Low, Speed::VeryHigh);
+    let r_nen = Output::new(p.PA3, Level::Low, Speed::VeryHigh);
     // Right-side daughterboard sensors
-    // let sens_lock = Input::new(p.PA10, Pull::Down);
+    let sens_lock = Input::new(p.PA10, Pull::Down);
 
     // Left-side daughterboard LED control
-    let sck_l = Output::new(p.PA4, Level::Low, Speed::Low);
-    let sin_l = Output::new(p.PA5, Level::Low, Speed::Low);
-    let lat_l = Output::new(p.PA6, Level::Low, Speed::Low);
-    let l_nen1 = Output::new(p.PA7, Level::Low, Speed::Low);
-    let l_nen2 = Output::new(p.PB0, Level::Low, Speed::Low);
+    let sck_l = Output::new(p.PA4, Level::Low, Speed::VeryHigh);
+    let sin_l = Output::new(p.PA5, Level::Low, Speed::VeryHigh);
+    let lat_l = Output::new(p.PA6, Level::Low, Speed::VeryHigh);
+    let l_nen1 = Output::new(p.PA7, Level::Low, Speed::VeryHigh);
+    let l_nen2 = Output::new(p.PB0, Level::Low, Speed::VeryHigh);
     // Left-side daughterboard sensors
     // let btn_warn = Input::new(p.PB2, Pull::Down);
     // let btn_volume = Input::new(p.PB10, Pull::Down);
 
     // Center daughterboard LED control
-    let mut sck_ls = Output::new(p.PB15, Level::Low, Speed::Low);
-    // (&p.PA8).set_as_af(p.PA8.af_num(), AFType::OutputPushPull);
-    // let mut sin_ls = Output::new(p.PA8, Level::Low, Speed::Low);
-    let mut lat_ls = Output::new(p.PA9, Level::Low, Speed::Low);
-    let ls1_nen = Output::new(p.PB9, Level::Low, Speed::Low);
-    let ls2_nen = Output::new(p.PB8, Level::Low, Speed::Low);
-    let ls3_nen = Output::new(p.PB7, Level::Low, Speed::Low);
-    let ls4_nen = Output::new(p.PB6, Level::Low, Speed::Low);
-    let ls5_nen = Output::new(p.PB1, Level::Low, Speed::Low);
+    let sck_ls = Output::new(p.PB15, Level::Low, Speed::VeryHigh);
+    let sin_ls = Output::new(p.PA8, Level::Low, Speed::VeryHigh);
+    let lat_ls = Output::new(p.PA9, Level::Low, Speed::VeryHigh);
+    let sin_ls = Output::new(p.PB14, Level::Low, Speed::VeryHigh);
+    let lat_ls = Output::new(p.PA13, Level::Low, Speed::VeryHigh);
+    let ls1_nen = Output::new(p.PB9, Level::Low, Speed::VeryHigh);
+    let ls2_nen = Output::new(p.PB8, Level::Low, Speed::VeryHigh);
+    let ls3_nen = Output::new(p.PB7, Level::Low, Speed::VeryHigh);
+    let ls4_nen = Output::new(p.PB6, Level::Low, Speed::VeryHigh);
+    let ls5_nen = Output::new(p.PB1, Level::Low, Speed::VeryHigh);
 
     // SATA status LED control
-    let sck_rg = Output::new(p.PB5, Level::Low, Speed::Low);
-    let sin_rg = Output::new(p.PB4, Level::Low, Speed::Low);
-    let lat_rg = Output::new(p.PB3, Level::Low, Speed::Low);
+    let sck_rg = Output::new(p.PB5, Level::Low, Speed::VeryHigh);
+    let sin_rg = Output::new(p.PB4, Level::Low, Speed::VeryHigh);
+    let lat_rg = Output::new(p.PB3, Level::Low, Speed::VeryHigh);
 
     // SATA sensors
-    let sck_sens = Output::new(p.PA15, Level::Low, Speed::Low);
-    let sin_sens = Output::new(p.PA12, Level::Low, Speed::Low);
-    let nload_sens = Output::new(p.PA11, Level::Low, Speed::Low);
+    let sck_sens = Output::new(p.PA15, Level::Low, Speed::VeryHigh);
+    let sin_sens = Output::new(p.PA12, Level::Low, Speed::VeryHigh);
+    let nload_sens = Output::new(p.PA11, Level::Low, Speed::VeryHigh);
 
     // interrupt::USART2.set_priority(Priority::P6);
     // let spawner = EXECUTOR_BLINK.start(interrupt::USART2);
@@ -138,70 +139,70 @@ async fn main(_spawner: Spawner) {
     //     driver.display_cycle_test().await;
     // }
 
-    let pb11 = Output::new(p.PB11, Level::Low, Speed::Low);
-    let pb12 = Output::new(p.PB12, Level::Low, Speed::Low);
-    let pb13 = Output::new(p.PB13, Level::Low, Speed::Low);
-    let pb14 = Output::new(p.PB14, Level::Low, Speed::Low);
-    let pb2 = Output::new(p.PB2, Level::Low, Speed::Low);
-    let pb10 = Output::new(p.PB10, Level::Low, Speed::Low);
+    let pb11 = Output::new(p.PB11, Level::Low, Speed::VeryHigh);
+    let pb12 = Output::new(p.PB12, Level::Low, Speed::VeryHigh);
+    let pb13 = Output::new(p.PB13, Level::Low, Speed::VeryHigh);
+    // let pb14 = Output::new(p.PB14, Level::Low, Speed::VeryHigh);
+    let pb2 = Output::new(p.PB2, Level::Low, Speed::VeryHigh);
+    let pb10 = Output::new(p.PB10, Level::Low, Speed::VeryHigh);
 
-    // Hello world of GPIOB
-    pac::GPIOB.bsrr().write_value(Bsrr(0x0000FFFF));
-    // pac::GPIOB.bsrr().write(|w| w.0 = 0x0000FFFF);
-    // pac::GPIOB.bsrr().write(|w| {
-    //     for i in 0..16 {
-    //         w.set_bs(i, true);
-    //     }
-    //     for i in 0..16 {
-    //         w.set_br(i, false);
-    //     }
-    // });
-    Timer::after_secs(1).await;
-    pac::GPIOB.bsrr().write_value(Bsrr(0xFFFF0000));
-    // pac::GPIOB.bsrr().write(|w| w.0 = 0xFFFF0000);
-    // pac::GPIOB.bsrr().write(|w| {
-    //     for i in 0..16 {
-    //         w.set_bs(i, false);
-    //     }
-    //     for i in 0..16 {
-    //         w.set_br(i, true);
-    //     }
-    // });
-    Timer::after_millis(100).await;
+    // // Hello world of GPIOB
+    // pac::GPIOB.bsrr().write_value(Bsrr(0x0000FFFF));
+    // // pac::GPIOB.bsrr().write(|w| w.0 = 0x0000FFFF);
+    // // pac::GPIOB.bsrr().write(|w| {
+    // //     for i in 0..16 {
+    // //         w.set_bs(i, true);
+    // //     }
+    // //     for i in 0..16 {
+    // //         w.set_br(i, false);
+    // //     }
+    // // });
+    // Timer::after_secs(1).await;
+    // pac::GPIOB.bsrr().write_value(Bsrr(0xFFFF0000));
+    // // pac::GPIOB.bsrr().write(|w| w.0 = 0xFFFF0000);
+    // // pac::GPIOB.bsrr().write(|w| {
+    // //     for i in 0..16 {
+    // //         w.set_bs(i, false);
+    // //     }
+    // //     for i in 0..16 {
+    // //         w.set_br(i, true);
+    // //     }
+    // // });
+    // Timer::after_millis(100).await;
 
     // References:
     // - https://embassy.dev/dev/layer_by_layer.html
     // - https://www.st.com/resource/en/datasheet/stm32f401cc.pdf (DS9716, block diagram, AF mappings)
     // - https://www.st.com/resource/en/reference_manual/rm0368-stm32f401xbc-and-stm32f401xde-advanced-armbased-32bit-mcus-stmicroelectronics.pdf (RM0368, registers)
 
-    // GPIO
-    // Alternate Function pins are configured in the Embassy HAL by declaring a PwmPin.
-    // It works, but there's more AFs than PWM. Embassy just exposes one AF so hence the naming I guess.
-    //
-    // Embassy HAL has an internal function to set any AF mode on a pin. It could basically consist of
-    // declaring an Input/Output::new() and running set_as_af(). Alas, the function is private.
-    //
-    // The commented HAL code and the uncommented registry writes are equivalent.
+    // // GPIO
+    // // Alternate Function pins are configured in the Embassy HAL by declaring a PwmPin.
+    // // It works, but there's more AFs than PWM. Embassy just exposes one AF so hence the naming I guess.
+    // //
+    // // Embassy HAL has an internal function to set any AF mode on a pin. It could basically consist of
+    // // declaring an Input/Output::new() and running set_as_af(). Alas, the function is private.
+    // //
+    // // The commented HAL code and the uncommented registry writes are equivalent.
 
-    // let ch1 = PwmPin::new_ch1(p.PA8, OutputType::PushPull);
-    pac::RCC.ahb1enr().modify(|w| w.set_gpioaen(true));
-    pac::GPIOA.bsrr().write(|w| w.set_br(8, true));
-    pac::GPIOA.afr(8 / 8).modify(|w| {
-        w.set_afr(8 % 8, 0x01);
-    });
-    pac::GPIOA.otyper().modify(|w| {
-        w.set_ot(8, pac::gpio::vals::Ot::PUSHPULL);
-    });
-    pac::GPIOA.pupdr().modify(|w| {
-        w.set_pupdr(8, Pull::None.into());
-        // w.set_pupdr(8, pac::gpio::vals::Pupdr::FLOATING);
-    });
-    pac::GPIOA.moder().modify(|w| {
-        w.set_moder(8, pac::gpio::vals::Moder::ALTERNATE);
-    });
-    pac::GPIOA.ospeedr().modify(|w| {
-        w.set_ospeedr(8, pac::gpio::vals::Ospeedr::VERYHIGHSPEED);
-    });
+    // // let ch1 = PwmPin::new_ch1(p.PA8, OutputType::PushPull);
+    // pac::RCC.ahb1enr().modify(|w| w.set_gpioaen(true));
+    // pac::GPIOA.bsrr().write(|w| w.set_br(8, true));
+    // pac::GPIOA.afr(8 / 8).modify(|w| {
+    //     w.set_afr(8 % 8, 0x01);
+    // });
+    // pac::GPIOA.otyper().modify(|w| {
+    //     w.set_ot(8, pac::gpio::vals::Ot::PUSHPULL);
+    // });
+    // pac::GPIOA.pupdr().modify(|w| {
+    //     w.set_pupdr(8, Pull::None.into());
+    //     // w.set_pupdr(8, pac::gpio::vals::Pupdr::FLOATING);
+    // });
+    // pac::GPIOA.moder().modify(|w| {
+    //     w.set_moder(8, pac::gpio::vals::Moder::ALTERNATE);
+    // });
+    // pac::GPIOA.ospeedr().modify(|w| {
+    //     w.set_ospeedr(8, pac::gpio::vals::Ospeedr::VERYHIGHSPEED);
+    // });
 
     // Timer
     // The Embassy HAL can do almost all we need.
@@ -265,6 +266,7 @@ async fn main(_spawner: Spawner) {
     // The only required registry write here is connecting the timer and DMA controller.
     // It is missing in the Embassy HAL.
     pac::TIM1.dier().modify(|dier| {
+        dier.set_ccde(3, true);
         dier.set_ude(true); // enable DMA on TIM1_UP
     });
     // The others are default values, or not used in timing calculations.
@@ -283,9 +285,6 @@ async fn main(_spawner: Spawner) {
     // pac::TIM1.egr().write(|w| {
     //     w.set_ug(true); // update generation
     // });
-    pac::TIM1.dier().modify(|dier| {
-        dier.set_ude(true); // enable DMA on TIM1_UP
-    });
     pac::TIM1.ccmr_output(0).modify(|ccmr| {
         // ccmr.set_ccs(0, pac::timer::vals::CcmrOutputCcs::OUTPUT); // output compare is output
         ccmr.set_ocpe(0, pac::timer::vals::Ocpe::DISABLED); // output compare preload enable
@@ -295,9 +294,9 @@ async fn main(_spawner: Spawner) {
     // });
     // pac::TIM1.rcr().write_value(Rcr(0)); // repetition counter
 
-    // Demo value buffer to use for DMA.
-    // Uses the BSRR to set and reset outputs to step over and enable each GPIOB pin one by one.
-    let mut bsrr_values = [0x0000FFFFu32; 16];
+    // // Demo value buffer to use for DMA.
+    // // Uses the BSRR to set and reset outputs to step over and enable each GPIOB pin one by one.
+    // let mut bsrr_values = [0x0000FFFFu32; 16];
     // for i in 0..bsrr_values.len() {
     //     let prev_i = if i == 0 { 15 } else { i - 1 };
     //     // bsrr_values[i] = (0x01 << (prev_i + 16)) | (0x01 << i);
@@ -306,9 +305,39 @@ async fn main(_spawner: Spawner) {
     //     b.set_bs(i, true);
     //     bsrr_values[i] = b.0;
     // }
-    for i in (0..bsrr_values.len()).step_by(2) {
-        bsrr_values[i] = 0xFFFF0000;
+    // // for i in (0..bsrr_values.len()).step_by(2) {
+    // //     bsrr_values[i] = 0xFFFF0000;
+    // // }
+
+    // let mut pb3 = Flex::new(p.PB3);
+    // pb3.set_as_output(Speed::VeryHigh);
+    // let mut bsrr_values2 = [0xFFFF0000u32; 16];
+    // for i in (0..bsrr_values2.len()).step_by(2) {
+    //     // let n = p.PB3._pin();
+    //     let n = 3usize;
+    //     // bsrr_values2[i] = 0x00000001;
+    //     bsrr_values2[i] = 0u32 | (1u32 << n);
+    // }
+
+    // // 3 ODR values per serial value sent, 32 LEDs to steer, 20 brightness levels
+    // let mut odr_values = [0u16; 3*32*20];
+    // for i in (0..odr_values.len()).step_by(6) {
+    //     odr_values[i] = 0x0001;
+    //     odr_values[i+1] = 0x0003;
+    //     odr_values[i+2] = 0x0001;
+    //     odr_values[i+3] = 0x0000;
+    //     odr_values[i+4] = 0x0002;
+    //     odr_values[i+5] = 0x0000;
+    // }
+    let mut odr_values = [0xFFFFu16; 16];
+    for i in (0..odr_values.len()).step_by(2) {
+        odr_values[i] = 0;
     }
+    // let mut odr_values2 = [0u16; 16];
+    // for i in 0..odr_values2.len() {
+    //     odr_values2[i] = 1u16 << i;
+    // }
+
 
     // DMA
     // Embassy HAL is not used here. This code is purely made by setting up the project in
@@ -322,6 +351,26 @@ async fn main(_spawner: Spawner) {
     });
     // HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 0, 0);
     pac::Interrupt::DMA2_STREAM5.set_priority(Priority::P0);
+    pac::Interrupt::DMA2_STREAM4.set_priority(Priority::P0);
+    pac::DMA2.st(4).cr().modify(|w| {
+        // w.set_en(false);
+        w.set_chsel(6);
+        w.set_circ(pac::dma::vals::Circ::ENABLED); // circular mode
+        // w.set_circ(pac::dma::vals::Circ::DISABLED); // circular mode
+        // w.set_ct(pac::dma::vals::Ct::MEMORY0); // double buffer bank select
+        w.set_dbm(pac::dma::vals::Dbm::DISABLED); // double buffer mode
+        w.set_dir(pac::dma::vals::Dir::MEMORYTOPERIPHERAL);
+        w.set_minc(pac::dma::vals::Inc::INCREMENTED); // memory increment
+        w.set_pinc(pac::dma::vals::Inc::FIXED); // peripheral not incrumented
+        w.set_msize(pac::dma::vals::Size::BITS16); // memory size = word
+        w.set_psize(pac::dma::vals::Size::BITS16);
+        w.set_mburst(pac::dma::vals::Burst::SINGLE); // no bursting
+        w.set_pburst(pac::dma::vals::Burst::SINGLE);
+        w.set_pfctrl(pac::dma::vals::Pfctrl::DMA); // DMA sets flow
+        w.set_pl(pac::dma::vals::Pl::HIGH); // priority
+        w.set_tcie(true); // done interrupt enable
+        w.set_teie(true); // error interrupt enable
+    });
     pac::DMA2.st(5).cr().modify(|w| {
         // w.set_en(false);
         w.set_chsel(6);
@@ -332,8 +381,8 @@ async fn main(_spawner: Spawner) {
         w.set_dir(pac::dma::vals::Dir::MEMORYTOPERIPHERAL);
         w.set_minc(pac::dma::vals::Inc::INCREMENTED); // memory increment
         w.set_pinc(pac::dma::vals::Inc::FIXED); // peripheral not incrumented
-        w.set_msize(pac::dma::vals::Size::BITS32); // memory size = word
-        w.set_psize(pac::dma::vals::Size::BITS32);
+        w.set_msize(pac::dma::vals::Size::BITS16); // memory size = word
+        w.set_psize(pac::dma::vals::Size::BITS16);
         w.set_mburst(pac::dma::vals::Burst::SINGLE); // no bursting
         w.set_pburst(pac::dma::vals::Burst::SINGLE);
         w.set_pfctrl(pac::dma::vals::Pfctrl::DMA); // DMA sets flow
@@ -345,9 +394,14 @@ async fn main(_spawner: Spawner) {
     // Done in CubeIDE, breaks everything here.
     // pac::DMA2.ifcr(5).write_value(Ixr(0)); // clear all interrupt flags
 
-    pac::DMA2.st(5).ndtr().write_value(Ndtr(16)); // stream this many values
-    pac::DMA2.st(5).m0ar().write_value(bsrr_values.as_ptr() as u32); // source address
-    pac::DMA2.st(5).par().write_value(pac::GPIOB.bsrr().as_ptr() as u32); // destination address
+    pac::DMA2.st(4).ndtr().write_value(Ndtr(odr_values.len() as u32)); // stream this many values
+    pac::DMA2.st(4).m0ar().write_value(odr_values.as_ptr() as u32); // source address
+    pac::DMA2.st(4).par().write_value(pac::GPIOA.odr().as_ptr() as u32); // destination address
+    pac::DMA2.st(4).cr().modify(|w| w.set_en(true)); // enable
+
+    pac::DMA2.st(5).ndtr().write_value(Ndtr(odr_values.len() as u32)); // stream this many values
+    pac::DMA2.st(5).m0ar().write_value(odr_values.as_ptr() as u32); // source address
+    pac::DMA2.st(5).par().write_value(pac::GPIOB.odr().as_ptr() as u32); // destination address
     pac::DMA2.st(5).cr().modify(|w| w.set_en(true)); // enable
 
     // Busy loop required
