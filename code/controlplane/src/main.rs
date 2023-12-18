@@ -10,7 +10,8 @@ use embassy_stm32::pac::gpio::regs::Bsrr;
 use embassy_stm32::pac::timer::regs::Arr16;
 use embassy_stm32::peripherals::{PB8, PB9, TIM1};
 use embassy_stm32::rcc::low_level::RccPeripheral;
-use embassy_stm32::rcc::{AHBPrescaler, APBPrescaler};
+use embassy_stm32::rcc::{AHBPrescaler, APBPrescaler, Sysclk, PllSource, PllPreDiv, Hse, Pll};
+use embassy_stm32::time::Hertz;
 use embassy_stm32::timer::low_level::Basic16bitInstance;
 use embassy_stm32::timer::low_level::CaptureCompare16bitInstance;
 use embassy_stm32::timer::low_level::GeneralPurpose16bitInstance;
@@ -46,28 +47,23 @@ async fn main(_spawner: Spawner) {
 
         config.enable_debug_during_sleep = false;
 
-        // config.rcc.hsi = false;
-        // config.rcc.hse = Some(Hse{
-        //     freq: Hertz::mhz(25),
-        //     mode: embassy_stm32::rcc::HseMode::Oscillator,
-        // });
-        // config.rcc.sys = Sysclk::PLL1_P;
-        // config.rcc.pll_src = PllSource::HSE;
-        // config.rcc.pll = Some(Pll{
-        //     prediv: PllPreDiv::DIV25,
-        //     mul: embassy_stm32::rcc::PllMul::MUL336,
-        //     divp: Some(embassy_stm32::rcc::PllPDiv::DIV4),
-        //     divq: Some(embassy_stm32::rcc::PllQDiv::DIV7),
-        //     divr: None,
-        // });
-        // config.rcc.ahb_pre = AHBPrescaler::DIV1;
-        // config.rcc.apb1_pre = APBPrescaler::DIV2;
-        // config.rcc.apb2_pre = APBPrescaler::DIV1;
-
-        // very slow clock to demo the counter in a human readable speed
-        config.rcc.ahb_pre = AHBPrescaler::DIV4;
-        config.rcc.apb1_pre = APBPrescaler::DIV16;
-        config.rcc.apb2_pre = APBPrescaler::DIV16;
+        config.rcc.hsi = false;
+        config.rcc.hse = Some(Hse{
+            freq: Hertz::mhz(25),
+            mode: embassy_stm32::rcc::HseMode::Oscillator,
+        });
+        config.rcc.sys = Sysclk::PLL1_P;
+        config.rcc.pll_src = PllSource::HSE;
+        config.rcc.pll = Some(Pll{
+            prediv: PllPreDiv::DIV25,
+            mul: embassy_stm32::rcc::PllMul::MUL336,
+            divp: Some(embassy_stm32::rcc::PllPDiv::DIV4),
+            divq: Some(embassy_stm32::rcc::PllQDiv::DIV7),
+            divr: None,
+        });
+        config.rcc.ahb_pre = AHBPrescaler::DIV1;
+        config.rcc.apb1_pre = APBPrescaler::DIV2;
+        config.rcc.apb2_pre = APBPrescaler::DIV1;
 
         embassy_stm32::init(config)
     };
@@ -231,8 +227,15 @@ async fn main(_spawner: Spawner) {
     // });
 
     // p.TIM1.set_frequency(Hertz(2));
-    pac::TIM1.psc().write(|w| w.set_psc(16_000 - 1)); // prescaler
-    pac::TIM1.arr().write_value(Arr16(16 - 1)); // counter period
+
+    // 21Mhz (84Mhz / (2 clk signal) / 1 / 2)
+    pac::TIM1.psc().write(|w| w.set_psc(2-1)); // prescaler // max 65535
+    pac::TIM1.arr().write_value(Arr16(2-1)); // counter period // max 65535
+
+    // // 2Hz (84Mhz / (2 clk signal) / 60_000 / 350)
+    // pac::TIM1.psc().write(|w| w.set_psc(60_000 - 1)); // prescaler // max 65535
+    // pac::TIM1.arr().write_value(Arr16(350-1)); // counter period // max 65535
+
     pac::TIM1.egr().write(|w| {
         w.set_ug(true);
     });
@@ -294,14 +297,17 @@ async fn main(_spawner: Spawner) {
 
     // Demo value buffer to use for DMA.
     // Uses the BSRR to set and reset outputs to step over and enable each GPIOB pin one by one.
-    let mut bsrr_values = [0u32; 16];
-    for i in 0..bsrr_values.len() {
-        let prev_i = if i == 0 { 15 } else { i - 1 };
-        // bsrr_values[i] = (0x01 << (prev_i + 16)) | (0x01 << i);
-        let mut b = Bsrr::default();
-        b.set_br(prev_i, true);
-        b.set_bs(i, true);
-        bsrr_values[i] = b.0;
+    let mut bsrr_values = [0x0000FFFFu32; 16];
+    // for i in 0..bsrr_values.len() {
+    //     let prev_i = if i == 0 { 15 } else { i - 1 };
+    //     // bsrr_values[i] = (0x01 << (prev_i + 16)) | (0x01 << i);
+    //     let mut b = Bsrr::default();
+    //     b.set_br(prev_i, true);
+    //     b.set_bs(i, true);
+    //     bsrr_values[i] = b.0;
+    // }
+    for i in (0..bsrr_values.len()).step_by(2) {
+        bsrr_values[i] = 0xFFFF0000;
     }
 
     // DMA
@@ -320,6 +326,7 @@ async fn main(_spawner: Spawner) {
         // w.set_en(false);
         w.set_chsel(6);
         w.set_circ(pac::dma::vals::Circ::ENABLED); // circular mode
+        // w.set_circ(pac::dma::vals::Circ::DISABLED); // circular mode
         // w.set_ct(pac::dma::vals::Ct::MEMORY0); // double buffer bank select
         w.set_dbm(pac::dma::vals::Dbm::DISABLED); // double buffer mode
         w.set_dir(pac::dma::vals::Dir::MEMORYTOPERIPHERAL);
@@ -345,7 +352,12 @@ async fn main(_spawner: Spawner) {
 
     // Busy loop required
     loop {
-        Timer::after_millis(500).await;
+        Timer::after_millis(1000).await;
+        led.toggle();
+
+        // Timer::after_millis(10_000).await;
+        // led.toggle();
+        // pac::DMA2.st(5).cr().modify(|w| w.set_en(true)); // re-enable DMA
     }
 
     // let executor = EXECUTOR_LS.init(Executor::new());
