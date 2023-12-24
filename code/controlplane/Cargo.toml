@@ -5,12 +5,12 @@ version = "0.1.0"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-embassy-stm32 = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy", rev = "2d2bd679", features = [ "defmt", "stm32f401cc", "unstable-pac", "memory-x", "time-driver-any", "exti", "embedded-sdmmc", "chrono"]  }
-embassy-sync = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy", rev = "2d2bd679", features = ["defmt"] }
-embassy-executor = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy", rev = "2d2bd679", features = ["nightly", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"] }
-embassy-time = { version = "0.2", git = "https://github.com/embassy-rs/embassy", rev = "2d2bd679", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] }
-embassy-usb = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy", rev = "2d2bd679", features = ["defmt" ] }
-embassy-net = { version = "0.2.0", git = "https://github.com/embassy-rs/embassy", rev = "2d2bd679", features = ["defmt", "tcp", "dhcpv4", "medium-ethernet", ] }
+embassy-stm32 = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy", rev = "a2d4bab2", features = [ "defmt", "stm32f401cc", "unstable-pac", "memory-x", "time-driver-any", "exti", "embedded-sdmmc", "chrono"]  }
+embassy-sync = { version = "0.5.0", git = "https://github.com/embassy-rs/embassy", rev = "a2d4bab2", features = ["defmt"] }
+embassy-executor = { version = "0.4.0", git = "https://github.com/embassy-rs/embassy", rev = "a2d4bab2", features = ["nightly", "arch-cortex-m", "executor-thread", "executor-interrupt", "defmt", "integrated-timers"] }
+embassy-time = { version = "0.2", git = "https://github.com/embassy-rs/embassy", rev = "a2d4bab2", features = ["defmt", "defmt-timestamp-uptime", "tick-hz-32_768"] }
+embassy-usb = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy", rev = "a2d4bab2", features = ["defmt" ] }
+embassy-net = { version = "0.2.0", git = "https://github.com/embassy-rs/embassy", rev = "a2d4bab2", features = ["defmt", "tcp", "dhcpv4", "medium-ethernet", ] }
 
 defmt = "0.3"
 defmt-rtt = "0.4"
@@ -30,11 +30,11 @@ static_cell = { version = "2", features = ["nightly"]}
 chrono = { version = "^0.4", default-features = false}
 
 # https://nnethercote.github.io/perf-book/build-configuration.html
-# [profile.release]
-# codegen-units = 1
-# lto = "fat"
-# strip = "symbols"
-# opt-level = 3
+[profile.release]
+codegen-units = 1
+lto = "fat"
+strip = "symbols"
+opt-level = 3
 
 # https://github.com/rust-lang/vscode-rust/issues/729#issuecomment-1102050361
 [[bin]]

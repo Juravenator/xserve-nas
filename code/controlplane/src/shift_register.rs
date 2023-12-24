@@ -1,48 +1,64 @@
-use embassy_stm32::gpio::{Pin, Output, Level};
-use embassy_time::{Timer, Duration, block_for};
+use embassy_stm32::gpio::{Pin, Output, Level, Speed};
 
-
-pub struct ShiftRegister<SCK: Pin, SIN: Pin, LATCH: Pin> {
-  sck: Output<'static, SCK>,
-  sin: Output<'static, SIN>,
-  lat: Output<'static, LATCH>,
+pub struct DMAShiftRegister {
+  sck: u8, // pin number for SCK
+  sin: u8, // pin number for SIN
+  lat: u8, // pin number for LAT
 }
 
-impl<SCK: Pin, SIN: Pin, LATCH: Pin> ShiftRegister<SCK, SIN, LATCH> {
-  pub fn new(
-    sck: Output<'static, SCK>,
-    sin: Output<'static, SIN>,
-    lat: Output<'static, LATCH>,
-  ) -> ShiftRegister<SCK, SIN, LATCH> {
-    ShiftRegister { sck, sin, lat }
+#[inline]
+pub fn set_bit(buf: &mut u16, pin: u8) {
+    *buf |= 1 << pin
+}
+#[inline]
+pub fn unset_bit(buf: &mut u16, pin: u8) {
+    *buf &= u16::MAX ^ 1 << pin
+}
+
+impl DMAShiftRegister {
+  pub const CLOCKS_PER_BIT: usize = 3;
+
+  pub fn new(sck: impl Pin, sin: impl Pin, lat: impl Pin) -> DMAShiftRegister {
+    assert_eq!(sck._port(), sin._port());
+    assert_eq!(sck._port(), lat._port());
+
+    let r = DMAShiftRegister { sck: sck._pin(), sin: sin._pin(), lat: lat._pin() };
+
+    // We need to make sure the Output<> destructors are not called after new() finishes.
+    core::mem::forget(Output::new(sck, Level::Low, Speed::VeryHigh));
+    core::mem::forget(Output::new(sin, Level::Low, Speed::VeryHigh));
+    core::mem::forget(Output::new(lat, Level::Low, Speed::VeryHigh));
+
+    r
   }
 
-  pub async fn send_bits<const N: usize>(&mut self, data: [Level; N]) {
-    for l in data {
-      self.sin.set_level(l);
-      self.sck.set_high();
-      // block_for(Duration::from_ticks(1));
-      // Timer::after(Duration::from_micros_floor(1)).await;
-      // Timer::after_millis(40).await;
-      self.sck.set_low();
-      // block_for(Duration::from_ticks(1));
-      // Timer::after(Duration::from_micros_floor(1)).await;
-      // Timer::after_millis(40).await;
+  // pub fn send_bits<const N: usize>(&mut self, data: [Level; N], buf: &mut [u16; N*3]) {
+  pub fn encode_bits<const N: usize>(&mut self, data: [Level; N], buf: &mut [u16]) -> usize {
+    assert!(buf.len() >= N*3);
+
+    for (level_nr, l) in data.iter().enumerate() {
+      let buf_i = level_nr*Self::CLOCKS_PER_BIT;
+
+      // Reset SCK and LAT pins.
+      // Set SIN pin for whole CLOCKS_PER_BIT duration.
+      for i in buf_i..buf_i+Self::CLOCKS_PER_BIT {
+        unset_bit(&mut buf[i], self.sck);
+        match l {
+          Level::High => set_bit(&mut buf[i], self.sin),
+          Level::Low => unset_bit(&mut buf[i], self.sin),
+        }
+      }
+
+      // Clock pulse in the middle.
+      // This ensures a nice SIN signal around the clock signal edge.
+      set_bit(&mut buf[buf_i+1], self.sck);
+      // unset_bit(&mut buf[i+2], sck);
     }
+
+    N*3
   }
 
-  pub async fn latch(&mut self) {
-    self.lat.set_high();
-    // Timer::after(Duration::from_micros_floor(1)).await;
-    // Timer::after_millis(40).await;
-    self.lat.set_low();
+  pub fn latch(&mut self, buf: &mut u16) {
+    set_bit(buf, self.lat);
   }
 }
-
-// impl ShiftRegister {
-//   pub fn new(
-//     sck: Output<'static, AnyPin>,
-//     sin: Output<'static, AnyPin>,
-//     lat: Output<'static, AnyPin>,
-//   ) -> ShiftRegister { ShiftRegister{sck, sin, lat} }
-// }
