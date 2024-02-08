@@ -1,44 +1,67 @@
+use embassy_stm32::pac;
 use embassy_stm32::pac::dma::regs::Ndtr;
 use embassy_stm32::pac::timer::regs::Arr16;
 use embassy_stm32::peripherals::TIM1;
 use embassy_stm32::rcc::low_level::RccPeripheral;
+use embassy_stm32::timer::low_level::{
+    Basic16bitInstance, CaptureCompare16bitInstance, GeneralPurpose16bitInstance,
+};
 use embassy_stm32::timer::Channel;
-use embassy_stm32::timer::low_level::{Basic16bitInstance, CaptureCompare16bitInstance, GeneralPurpose16bitInstance};
 use embassy_stm32::timer::{CountingMode, OutputCompareMode};
-use embassy_stm32::pac;
 
 // References:
 // - https://embassy.dev/dev/layer_by_layer.html
 // - https://www.st.com/resource/en/datasheet/stm32f401cc.pdf (DS9716, block diagram, AF mappings)
 // - https://www.st.com/resource/en/reference_manual/rm0368-stm32f401xbc-and-stm32f401xde-advanced-armbased-32bit-mcus-stmicroelectronics.pdf (RM0368, registers)
 
+/// Create our two DMA operations using TIM1 as a source.
 pub fn init(tim1: TIM1) -> [DMAStream; 2] {
-  init_timer(tim1);
-  init_dma(&[4, 5]);
+    init_timer(tim1);
+    init_dma(&[4, 5]);
 
-  [DMAStream(4), DMAStream(5)]
+    [DMAStream(4), DMAStream(5)]
 }
 
+/// Wrapper for a memory-to-peripheral cyclic DMA operation.
+/// ```ignore
+/// let dmas = dma::init(p.TIM1);
+/// dmas[0].set_source(&buffer);
+/// dmas[0].set_destination(pac::GPIOA.odr().as_ptr() as u32);
+/// dmas[0].enable();
+///
+/// // edit buffer and restart DMA from the beginning
+/// dmas[0].disable();
+/// &buffer[0] = 0xFF;
+/// dmas[0].enable();
+/// ```
 #[derive(Default, Clone, Copy, Debug)]
 pub struct DMAStream(usize);
 
 impl DMAStream {
-  pub fn set_source<T>(&self, buf: &[T]) {
-    pac::DMA2.st(self.0).ndtr().write_value(Ndtr(buf.len() as u32)); // stream this many values
-    pac::DMA2.st(self.0).m0ar().write_value(buf.as_ptr() as u32); // source address
-  }
+    /// Set source buffer where to DMA read from.
+    pub fn set_source<T>(&self, buf: &[T]) {
+        pac::DMA2
+            .st(self.0)
+            .ndtr()
+            .write_value(Ndtr(buf.len() as u32)); // stream this many values
+        pac::DMA2.st(self.0).m0ar().write_value(buf.as_ptr() as u32); // source address
+    }
 
-  pub fn set_destination(&self, ptr: u32) {
-    pac::DMA2.st(self.0).par().write_value(ptr); // destination address
-  }
+    /// Set destination pointer where to write source buffer values to.
+    pub fn set_destination(&self, ptr: u32) {
+        pac::DMA2.st(self.0).par().write_value(ptr); // destination address
+    }
 
-  pub fn enable(&self) {
-    pac::DMA2.st(self.0).cr().modify(|w| w.set_en(true)); // enable
-  }
+    /// Start the buffer from the beginning.
+    /// No effect when already enabled, disable first to restart.
+    pub fn enable(&self) {
+        pac::DMA2.st(self.0).cr().modify(|w| w.set_en(true)); // enable
+    }
 
-  pub fn disable(&self) {
-    pac::DMA2.st(self.0).cr().modify(|w| w.set_en(false)); // enable
-  }
+    /// Stops the current DMA without waiting to finish the current DMA cycle.
+    pub fn disable(&self) {
+        pac::DMA2.st(self.0).cr().modify(|w| w.set_en(false)); // enable
+    }
 }
 
 // fn init_af() {
@@ -71,6 +94,7 @@ impl DMAStream {
 //     });
 // }
 
+/// Setup timer 1.
 fn init_timer(mut tim1: TIM1) {
     // The Embassy HAL can do almost all we need.
     //
@@ -97,8 +121,13 @@ fn init_timer(mut tim1: TIM1) {
     // tim1.set_frequency(Hertz(2));
 
     // 21Mhz (84Mhz / (2 clk signal) / 1 / 2)
-    pac::TIM1.psc().write(|w| w.set_psc(1-1)); // prescaler // max 65535
-    pac::TIM1.arr().write_value(Arr16(2-1)); // counter period // max 65535
+    // LED driver chips are 25Mhz max, this is the closest we can get.
+    pac::TIM1.psc().write(|w| w.set_psc(1 - 1)); // prescaler // max 65535
+    pac::TIM1.arr().write_value(Arr16(2 - 1)); // counter period // max 65535
+
+    // // 10.5Mhz (84Mhz / (2 clk signal) / 4 / 4)
+    // pac::TIM1.psc().write(|w| w.set_psc(8-1)); // prescaler // max 65535
+    // pac::TIM1.arr().write_value(Arr16(8-1)); // counter period // max 65535
 
     // // 2Hz (84Mhz / (2 clk signal) / 60_000 / 350)
     // pac::TIM1.psc().write(|w| w.set_psc(60_000 - 1)); // prescaler // max 65535
@@ -148,7 +177,7 @@ fn init_timer(mut tim1: TIM1) {
     pac::TIM1.cr2().modify(|cr2| {
         cr2.set_ccpc(false); // TRGO master/slave mode
         cr2.set_mms(pac::timer::vals::Mms::UPDATE); // TRGO trigger event selection
-        // cr2.set_ccus(true); // capture/control update
+                                                    // cr2.set_ccus(true); // capture/control update
         cr2.set_ccds(pac::timer::vals::Ccds::ONCOMPARE);
     });
     // pac::TIM1.egr().write(|w| {
@@ -171,34 +200,34 @@ fn init_dma(streams: &[usize]) {
     // MX_DMA_Init
     // __HAL_RCC_DMA2_CLK_ENABLE();
     pac::RCC.ahb1enr().modify(|w| {
-      // w.set_dma1en(true);
-      w.set_dma2en(true);
-  });
-  // HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 0, 0);
-  // pac::Interrupt::DMA2_STREAM5.set_priority(Priority::P0);
-  // pac::Interrupt::DMA2_STREAM4.set_priority(Priority::P0);
-  for stream in streams {
-    pac::DMA2.st(*stream).cr().modify(|w| {
-        // w.set_en(false);
-        w.set_chsel(6);
-        w.set_circ(pac::dma::vals::Circ::ENABLED); // circular mode
-        // w.set_circ(pac::dma::vals::Circ::DISABLED); // circular mode
-        // w.set_ct(pac::dma::vals::Ct::MEMORY0); // double buffer bank select
-        w.set_dbm(pac::dma::vals::Dbm::DISABLED); // double buffer mode
-        w.set_dir(pac::dma::vals::Dir::MEMORYTOPERIPHERAL);
-        w.set_minc(pac::dma::vals::Inc::INCREMENTED); // memory increment
-        w.set_pinc(pac::dma::vals::Inc::FIXED); // peripheral not incrumented
-        w.set_msize(pac::dma::vals::Size::BITS16); // memory size = word
-        w.set_psize(pac::dma::vals::Size::BITS16);
-        w.set_mburst(pac::dma::vals::Burst::SINGLE); // no bursting
-        w.set_pburst(pac::dma::vals::Burst::SINGLE);
-        w.set_pfctrl(pac::dma::vals::Pfctrl::DMA); // DMA sets flow
-        w.set_pl(pac::dma::vals::Pl::HIGH); // priority
-        w.set_tcie(true); // done interrupt enable
-        w.set_teie(true); // error interrupt enable
+        // w.set_dma1en(true);
+        w.set_dma2en(true);
     });
+    // HAL_NVIC_SetPriority(DMA2_Stream5_IRQn, 0, 0);
+    // pac::Interrupt::DMA2_STREAM5.set_priority(Priority::P0);
+    // pac::Interrupt::DMA2_STREAM4.set_priority(Priority::P0);
+    for stream in streams {
+        pac::DMA2.st(*stream).cr().modify(|w| {
+            // w.set_en(false);
+            w.set_chsel(6);
+            w.set_circ(pac::dma::vals::Circ::ENABLED); // circular mode
+                                                       // w.set_circ(pac::dma::vals::Circ::DISABLED); // circular mode
+                                                       // w.set_ct(pac::dma::vals::Ct::MEMORY0); // double buffer bank select
+            w.set_dbm(pac::dma::vals::Dbm::DISABLED); // double buffer mode
+            w.set_dir(pac::dma::vals::Dir::MEMORYTOPERIPHERAL);
+            w.set_minc(pac::dma::vals::Inc::INCREMENTED); // memory increment
+            w.set_pinc(pac::dma::vals::Inc::FIXED); // peripheral not incrumented
+            w.set_msize(pac::dma::vals::Size::BITS16); // memory size = word
+            w.set_psize(pac::dma::vals::Size::BITS16);
+            w.set_mburst(pac::dma::vals::Burst::SINGLE); // no bursting
+            w.set_pburst(pac::dma::vals::Burst::SINGLE);
+            w.set_pfctrl(pac::dma::vals::Pfctrl::DMA); // DMA sets flow
+            w.set_pl(pac::dma::vals::Pl::HIGH); // priority
+            w.set_tcie(true); // done interrupt enable
+            w.set_teie(true); // error interrupt enable
+        });
 
-    // Done in CubeIDE, breaks everything here.
-    // pac::DMA2.ifcr(*stream).write_value(Ixr(0)); // clear all interrupt flags
-  }
+        // Done in CubeIDE, breaks everything here.
+        // pac::DMA2.ifcr(*stream).write_value(Ixr(0)); // clear all interrupt flags
+    }
 }
