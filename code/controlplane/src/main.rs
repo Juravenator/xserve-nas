@@ -636,7 +636,7 @@ async fn travel(
 // }
 
 #[embassy_executor::task]
-async fn run_blink(mut led: Output<'static, PC13>) {
+async fn run_blink(mut led: Output<'static>) {
     // let mut ticker = Ticker::every(Duration::from_secs(1));
     loop {
         info!("high");
@@ -652,7 +652,7 @@ async fn run_blink(mut led: Output<'static, PC13>) {
 }
 
 #[embassy_executor::task]
-async fn run_btn(mut button: ExtiInput<'static, PA1>, mut led: Output<'static, PC13>) {
+async fn run_btn(mut button: ExtiInput<'static>, mut led: Output<'static>) {
     // let mut ticker = Ticker::every(Duration::from_secs(1));
     loop {
         button.wait_for_rising_edge().await;

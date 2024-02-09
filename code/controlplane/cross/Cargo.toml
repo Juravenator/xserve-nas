@@ -4,5 +4,5 @@ version = "0.0.0"
 edition = "2021"
 
 [dependencies]
-embassy-stm32 = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy", rev = "a2d4bab2", features = [ "defmt", "stm32f401cc", "unstable-pac", "memory-x", "time-driver-any", "exti", "embedded-sdmmc", "chrono"]  }
+embassy-stm32 = { version = "0.1.0", git = "https://github.com/embassy-rs/embassy", rev = "460cf795", features = [ "defmt", "stm32f401cc", "unstable-pac", "memory-x", "time-driver-any", "exti", "chrono"]  }
 arrayref = "0.3.7"

@@ -171,7 +171,7 @@ fn init_timer(mut tim1: TIM1) {
     pac::TIM1.cr1().modify(|cr1| {
         cr1.set_ckd(pac::timer::vals::Ckd::DIV1); // internal clock division
         cr1.set_arpe(true); // auto-reload preload
-        cr1.set_opm(pac::timer::vals::Opm::DISABLED); // one pulse mode
+        cr1.set_opm(false); // no one pulse mode
         cr1.set_udis(false); // update enable
     });
     pac::TIM1.cr2().modify(|cr2| {
@@ -185,7 +185,7 @@ fn init_timer(mut tim1: TIM1) {
     // });
     pac::TIM1.ccmr_output(0).modify(|ccmr| {
         // ccmr.set_ccs(0, pac::timer::vals::CcmrOutputCcs::OUTPUT); // output compare is output
-        ccmr.set_ocpe(0, pac::timer::vals::Ocpe::DISABLED); // output compare preload enable
+        ccmr.set_ocpe(0, false); // output compare preload enable
     });
     // pac::TIM1.ccr(0).modify(|ccr| {
     //     ccr.set_ccr(0); // compare value
@@ -210,13 +210,13 @@ fn init_dma(streams: &[usize]) {
         pac::DMA2.st(*stream).cr().modify(|w| {
             // w.set_en(false);
             w.set_chsel(6);
-            w.set_circ(pac::dma::vals::Circ::ENABLED); // circular mode
+            w.set_circ(true); // circular mode
                                                        // w.set_circ(pac::dma::vals::Circ::DISABLED); // circular mode
                                                        // w.set_ct(pac::dma::vals::Ct::MEMORY0); // double buffer bank select
-            w.set_dbm(pac::dma::vals::Dbm::DISABLED); // double buffer mode
+            w.set_dbm(false); // double buffer mode
             w.set_dir(pac::dma::vals::Dir::MEMORYTOPERIPHERAL);
-            w.set_minc(pac::dma::vals::Inc::INCREMENTED); // memory increment
-            w.set_pinc(pac::dma::vals::Inc::FIXED); // peripheral not incrumented
+            w.set_minc(true); // memory increment
+            w.set_pinc(false); // peripheral not incrumented
             w.set_msize(pac::dma::vals::Size::BITS16); // memory size = word
             w.set_psize(pac::dma::vals::Size::BITS16);
             w.set_mburst(pac::dma::vals::Burst::SINGLE); // no bursting
