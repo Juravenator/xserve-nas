@@ -44,13 +44,13 @@ in
       createNamespace = true;
 
       values = {
-        # additionalArguments = [
-        #   "--entryPoints.websecure.http.tls.certResolver=letsencrypt"
-        #   "--certificatesresolvers.letsencrypt.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
-        #   "--certificatesresolvers.letsencrypt.acme.email=glenn.dirkx@gmail.com"
-        #   "--certificatesresolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
-        #   "--certificatesresolvers.letsencrypt.acme.storage=/mnt/speedy1/acme.json"
-        # ];
+        additionalArguments = [
+          "--entryPoints.websecure.http.tls.certResolver=letsencrypt"
+          "--certificatesresolvers.letsencrypt.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
+          "--certificatesresolvers.letsencrypt.acme.email=glenn.dirkx@gmail.com"
+          "--certificatesresolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
+          "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+        ];
         ports = {
           web = {
             http = {
@@ -75,6 +75,23 @@ in
             }];
           };
         };
+        deployment = {
+          additionalVolumes = [
+            {
+              name = "data";
+              hostPath = {
+                type = "Directory";
+                path = "/hot-1/apps/traefik/data";
+              };
+            }
+          ];
+        };
+        additionalVolumeMounts = [
+          {
+            name = "data";
+            mountPath = "/data";
+          }
+        ];
         extraObjects = [
           # {
           #   apiVersion = "traefik.io/v1alpha1";
