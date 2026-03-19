@@ -75,39 +75,16 @@ in
             }];
           };
         };
-        deployment = {
-          additionalVolumes = [
-            {
-              name = "data";
-              hostPath = {
-                type = "Directory";
-                path = "/hot-1/apps/traefik/data";
-              };
-            }
-          ];
+        persistence = {
+          enabled = true;
+          existingClaim = "traefik-data";
         };
-        additionalVolumeMounts = [
-          {
-            name = "data";
-            mountPath = "/data";
-          }
-        ];
+        providers = {
+          kubernetesCRD = {
+            allowCrossNamespace = true;
+          };
+        };
         extraObjects = [
-          # {
-          #   apiVersion = "traefik.io/v1alpha1";
-          #   kind = "Middleware";
-          #   metadata = {
-          #     name = "redirect-to-https";
-          #     namespace = "traefik";
-          #   };
-          #   spec = {
-          #     redirectScheme = {
-          #       scheme = "https";
-          #       port = "443";
-          #       permanent = false;
-          #     };
-          #   };
-          # }
           {
             apiVersion = "traefik.io/v1alpha1";
             kind = "Middleware";
@@ -138,6 +115,64 @@ in
                   "X-Forwarded-User"
                 ];
               };
+            };
+          }
+          {
+            apiVersion = "v1";
+            kind = "PersistentVolume";
+            metadata = {
+              name = "traefik-data";
+            };
+            spec = {
+              capacity = {
+                storage = "100Mi";
+              };
+              volumeMode = "Filesystem";
+              accessModes = [
+                "ReadWriteOnce"
+              ];
+              persistentVolumeReclaimPolicy = "Retain";
+              storageClassName = "traefik-data";
+              local = {
+                path = "/hot-1/apps/traefik/data";
+              };
+              nodeAffinity = {
+                required = {
+                  nodeSelectorTerms = [
+                    {
+                      matchExpressions = [
+                        {
+                          key = "kubernetes.io/hostname";
+                          operator = "In";
+                          values = [
+                            "xserve"
+                          ];
+                        }
+                      ];
+                    }
+                  ];
+                };
+              };
+            };
+          }
+          {
+            apiVersion = "v1";
+            kind = "PersistentVolumeClaim";
+            metadata = {
+              name = "traefik-data";
+            };
+            spec = {
+              accessModes = [
+                "ReadWriteOnce"
+              ];
+              resources = {
+                requests = {
+                  storage = "100Mi";
+                };
+              };
+              storageClassName = "traefik-data";
+              volumeMode = "Filesystem";
+              volumeName = "traefik-data";
             };
           }
           {
