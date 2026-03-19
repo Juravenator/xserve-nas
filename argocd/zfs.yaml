@@ -1,0 +1,17 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: zfs-local-hot-1
+provisioner: zfs.csi.openebs.io
+parameters:
+  fstype: "zfs"
+  poolname: "hot-1/openebs"
+---
+# apiVersion: storage.k8s.io/v1
+# kind: StorageClass
+# metadata:
+#   name: zfs-local-warm-1
+# provisioner: zfs.csi.openebs.io
+# parameters:
+#   fstype: "zfs"
+#   poolname: "warm-1/openebs"
