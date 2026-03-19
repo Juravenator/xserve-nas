@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: plex-plex-media-server
+  namespace: plex
+spec:
+  serviceName: plex-plex-media-server
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: plex-media-server
+      app.kubernetes.io/instance: plex
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: plex-media-server
+        app.kubernetes.io/instance: plex
+    spec:
+      hostNetwork: true
+      volumes:
+      - name: pms-transcode
+        emptyDir: {}
+      - name: woofdisks
+        hostPath:
+          path: /warm-1/woofdisks
+          type: Directory
+      - name: biggusdiskus
+        hostPath:
+          path: /warm-1/vault
+          type: Directory
+      - name: pms-config
+        hostPath:
+          path: /hot-1/apps/plex/config
+          type: Directory
+      terminationGracePeriodSeconds: 120
+      containers:
+      - name: plex-plex-media-server-pms
+        image: index.docker.io/plexinc/pms-docker:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 32400
+          name: pms
+        env:
+        - name: PLEX_UID
+          value: "3000"
+        - name: PLEX_GID
+          value: "3000"
+        - name: ALLOWED_NETWORKS
+          value: "0.0.0.0/0"
+        - name: HOSTNAME
+          value: "orion.nest.jurabytes.net"
+        # - name: PLEX_CLAIM
+        #   value: "claim-tDBu9oQDQC8xcy3sz66T"
+        volumeMounts:
+        - name: pms-config
+          mountPath: /config
+        - name: pms-transcode
+          mountPath: /transcode
+        - name: woofdisks
+          mountPath: /data/woofdisks
+          mountPropagation: HostToContainer
+        - name: biggusdiskus
+          mountPath: /data/biggusdiskus
+          mountPropagation: HostToContainer
+  # volumeClaimTemplates:
+  # - metadata:
+  #     name: pms-config
+  #   spec:
+  #     accessModes: [ "ReadWriteOnce" ]
+  #     storageClassName: plex-config
+  #     resources:
+  #       requests:
+  #         storage: 2Gi
+  
