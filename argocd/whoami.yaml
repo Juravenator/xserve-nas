@@ -28,38 +28,21 @@ spec:
   selector:
     app: whoami
 ---
-# apiVersion: traefik.io/v1alpha1
-# kind: IngressRoute
-# metadata:
-#   name: whoami-https
-# spec:
-#   entryPoints:
-#   - websecure
-#   routes:
-#   - match: Host(`whoami.nest.jurabytes.net`)
-#     kind: Rule
-#     services:
-#     - name: whoami-service
-#       port: 80
-#     middlewares:
-#     - name: google-oauth
-#       namespace: traefik
-#   tls:
-#     certResolver: letsencrypt
-# ---
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:
-  name: whoami-http
+  name: whoami
 spec:
   entryPoints:
-  - web
+  - websecure
   routes:
   - match: Host(`whoami.nest.jurabytes.net`)
     kind: Rule
     services:
     - name: whoami-service
       port: 80
-    # middlewares:
-    # - name: redirect-to-https
-    #   namespace: traefik
+    middlewares:
+    - name: google-oauth
+      namespace: traefik
+  tls:
+    certResolver: letsencrypt
