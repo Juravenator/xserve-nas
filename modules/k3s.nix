@@ -51,6 +51,19 @@ in
         #   "--certificatesresolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
         #   "--certificatesresolvers.letsencrypt.acme.storage=/mnt/speedy1/acme.json"
         # ];
+        ports = {
+          web = {
+            http = {
+              redirections = {
+                entryPoint = {
+                  to = "websecure";
+                  seche = "https";
+                  permanent = false;
+                };
+              };
+            };
+          };
+        };
         ingressRoute = {
           dashboard = {
             enabled = true;
@@ -63,6 +76,36 @@ in
           };
         };
         extraObjects = [
+          # {
+          #   apiVersion = "traefik.io/v1alpha1";
+          #   kind = "Middleware";
+          #   metadata = {
+          #     name = "redirect-to-https";
+          #     namespace = "traefik";
+          #   };
+          #   spec = {
+          #     redirectScheme = {
+          #       scheme = "https";
+          #       port = "443";
+          #       permanent = false;
+          #     };
+          #   };
+          # }
+          {
+            apiVersion = "traefik.io/v1alpha1";
+            kind = "Middleware";
+            metadata = {
+              name = "internal-only";
+              namespace = "traefik";
+            };
+            spec = {
+              ipAllowList = {
+                sourceRange = [
+                  "192.168.42.0/24"
+                ];
+              };
+            };
+          }
           {
             apiVersion = "traefik.io/v1alpha1";
             kind = "Middleware";
