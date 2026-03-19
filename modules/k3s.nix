@@ -281,22 +281,23 @@ in
           };
           cm = {
             url = "https://argocd.nest.jurabytes.net";
-            "admin.enabled" = false;
-            "dex.config" = ''
-              connectors:
-              - config:
-                  issuer: https://accounts.google.com
-                  # These depend on `argocd-secret.yaml`
-                  # being manually applied to the cluster.
-                  clientID: $oidc.google.clientID
-                  clientSecret: $oidc.google.clientSecret
-                  insecureSkipVerify: true
-                  userIDKey: email
-                  userNameKey: email
-                type: oidc
-                id: google
-                name: Google
-              '';
+            "admin.enabled" = true;
+            # "admin.enabled" = false;
+            # "dex.config" = ''
+            #   connectors:
+            #   - config:
+            #       issuer: https://accounts.google.com
+            #       # These depend on `argocd-secret.yaml`
+            #       # being manually applied to the cluster.
+            #       clientID: $oidc.google.clientID
+            #       clientSecret: $oidc.google.clientSecret
+            #       insecureSkipVerify: true
+            #       userIDKey: email
+            #       userNameKey: email
+            #     type: oidc
+            #     id: google
+            #     name: Google
+            #   '';
             # Backup config for use in case of Dex troubles.
             # "oidc.config" = ''
             #   name: Google
@@ -307,19 +308,19 @@ in
             #   '';
 
           };
-          rbac = {
-            "policy.csv" = ''
-              p, role:operator, applications, sync, *, allow
-              p, role:operator, applications, get, *, allow
-              p, role:operator, applicationsets, get, *, allow
-              p, role:operator, projects, get, *, allow
-              p, role:operator, clusters, get, *, allow
-              p, role:operator, repositories, get, *, allow
-              p, role:operator, logs, get, *, allow
+          # rbac = {
+          #   "policy.csv" = ''
+          #     p, role:operator, applications, sync, *, allow
+          #     p, role:operator, applications, get, *, allow
+          #     p, role:operator, applicationsets, get, *, allow
+          #     p, role:operator, projects, get, *, allow
+          #     p, role:operator, clusters, get, *, allow
+          #     p, role:operator, repositories, get, *, allow
+          #     p, role:operator, logs, get, *, allow
 
-              g, glenn.dirkx@gmail.com, role:admin
-              '';
-          };
+          #     g, glenn.dirkx@gmail.com, role:admin
+          #     '';
+          # };
           secret = {
             createSecret = false;
           };
