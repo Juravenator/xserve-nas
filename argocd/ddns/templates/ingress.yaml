@@ -1,0 +1,17 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: ddns
+  labels:
+    app.kubernetes.io/name: ddns
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`ddns.nest.jurabytes.net`)
+    kind: Rule
+    services:
+    - name: ddns
+      port: 80
+  tls:
+    certResolver: letsencrypt

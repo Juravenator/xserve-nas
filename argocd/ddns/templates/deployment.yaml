@@ -1,0 +1,76 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ddns
+  labels:
+    app.kubernetes.io/name: ddns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ddns
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ddns
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: ddns
+        image: "qmcgaw/ddns-updater:v2.6.0"
+        imagePullPolicy: Always
+        ports:
+        - protocol: TCP
+          name: http
+          containerPort: 6500
+        env:
+        - name: CONFIG
+          value: ""
+        - name: PERIOD
+          value: 5m
+        - name: UPDATE_COOLDOWN_PERIOD
+          value: 5m
+        - name: PUBLICIP_FETCHERS
+          value: all
+        - name: PUBLICIP_HTTP_PROVIDERS
+          value: all
+        - name: PUBLICIPV4_HTTP_PROVIDERS
+          value: all
+        - name: PUBLICIPV6_HTTP_PROVIDERS
+          value: all
+        - name: PUBLICIP_DNS_PROVIDERS
+          value: all
+        - name: PUBLICIP_DNS_TIMEOUT
+          value: 3s
+        - name: HTTP_TIMEOUT
+          value: 10s
+        - name: LISTENING_ADDRESS
+          value: :6500
+        - name: ROOT_URL
+          value: /
+        - name: BACKUP_PERIOD
+          value: "0"
+        - name: BACKUP_DIRECTORY
+          value: /updater/data
+        - name: LOG_LEVEL
+          value: info
+        - name: LOG_CALLER
+          value: hidden
+        - name: SHOUTRRR_ADDRESSES
+          value: ""
+        livenessProbe:
+          httpGet:
+            path: /
+            port: http
+        readinessProbe:
+          httpGet:
+            path: /
+            port: http
+        volumeMounts:
+        - mountPath: /updater/data
+          name: data
+      volumes:
+      - hostPath:
+          path: /hot-1/apps/ddns-updater/data
+          type: Directory
+        name: data
