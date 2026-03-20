@@ -233,6 +233,10 @@ in
                         name = "INSECURE_COOKIE";
                         value = "true";
                       }
+                      {
+                        name = "WHITELIST";
+                        value = "glenn.dirkx@gmail.com";
+                      }
                     ];
                   }];
                 };
