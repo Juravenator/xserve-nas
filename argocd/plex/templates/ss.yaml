@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: plex-plex-media-server
+  name: server
   namespace: plex
 spec:
-  serviceName: plex-plex-media-server
+  serviceName: server
   selector:
     matchLabels:
       app.kubernetes.io/name: plex-media-server
@@ -33,7 +33,7 @@ spec:
           type: Directory
       terminationGracePeriodSeconds: 120
       containers:
-      - name: plex-plex-media-server-pms
+      - name: server
         image: index.docker.io/plexinc/pms-docker:latest
         imagePullPolicy: Always
         ports:
