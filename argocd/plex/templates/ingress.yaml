@@ -27,9 +27,6 @@ spec:
     services:
     - name: prowlarr
       port: http
-    middlewares:
-    - name: internal-only
-      namespace: traefik
   tls:
     certResolver: letsencrypt
 ---
@@ -46,9 +43,6 @@ spec:
     services:
     - name: radarr
       port: 80
-    middlewares:
-    - name: internal-only
-      namespace: traefik
   tls:
     certResolver: letsencrypt
 ---
@@ -65,8 +59,5 @@ spec:
     services:
     - name: sonarr
       port: http
-    middlewares:
-    - name: internal-only
-      namespace: traefik
   tls:
     certResolver: letsencrypt
