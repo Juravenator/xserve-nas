@@ -12,3 +12,44 @@ spec:
   selector:
     app.kubernetes.io/name: plex-media-server
     app.kubernetes.io/instance: plex
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: prowlarr
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: radarr
+spec:
+  ports:
+  - name: http
+    port: 80
+    targetPort: 7878
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: radarr
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sonarr
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 80
+    targetPort: http
+    protocol: TCP
+  selector:
+    app.kubernetes.io/name: sonarr

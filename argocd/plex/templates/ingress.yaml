@@ -13,3 +13,60 @@ spec:
       port: pms
   tls:
     certResolver: letsencrypt
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: prowlarr
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`prowlarr.nest.jurabytes.net`)
+    kind: Rule
+    services:
+    - name: prowlarr
+      port: http
+    middlewares:
+    - name: internal-only
+      namespace: traefik
+  tls:
+    certResolver: letsencrypt
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: radarr
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`radarr.nest.jurabytes.net`)
+    kind: Rule
+    services:
+    - name: radarr
+      port: 80
+    middlewares:
+    - name: internal-only
+      namespace: traefik
+  tls:
+    certResolver: letsencrypt
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: sonarr
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`sonarr.nest.jurabytes.net`)
+    kind: Rule
+    services:
+    - name: sonarr
+      port: http
+    middlewares:
+    - name: internal-only
+      namespace: traefik
+  tls:
+    certResolver: letsencrypt
