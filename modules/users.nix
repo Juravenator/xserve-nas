@@ -52,6 +52,7 @@ in {
 
   imports = [
     (mkUser "jura" "https://github.com/juravenator.keys")
+    (mkUser "xanen" "https://github.com/juravenator.keys")
   ];
 
 }
