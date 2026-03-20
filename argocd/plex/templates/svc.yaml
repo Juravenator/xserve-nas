@@ -53,3 +53,16 @@ spec:
     protocol: TCP
   selector:
     app.kubernetes.io/name: sonarr
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transmission
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    name: http
+    targetPort: 9091
+  selector:
+    app: gluetun

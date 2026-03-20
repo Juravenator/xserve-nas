@@ -1,0 +1,129 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gluetun
+  labels:
+    app: gluetun
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: gluetun
+  template:
+    metadata:
+      labels:
+        app: gluetun
+    spec:
+      containers:
+      - name: gluetun
+        # https://github.com/qdm12/gluetun/pkgs/container/gluetun/versions?filters%5Bversion_type%5D=tagged
+        image: ghcr.io/qdm12/gluetun:v3.40.0
+        imagePullPolicy: Always
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]
+        # You can optionally specify ports that are used by your containers, but it is not strictly necessary
+        # ports:
+        # - containerPort: 8080
+
+        # Adapt the following environment variables to suit your needs and VPN provider
+        env:
+        - name: TZ
+          value: Europe/London
+
+        - name: VPN_SERVICE_PROVIDER
+          value: nordvpn
+
+        - name: VPN_TYPE
+          value: wireguard
+
+        - name: WIREGUARD_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: nordvpn
+              key: private-key
+
+        - name: SERVER_CATEGORIES
+          value: P2P
+
+        - name: SERVER_COUNTRIES
+          value: Switzerland
+
+        - name: FIREWALL_INPUT_PORTS
+          value: 9091,9092
+
+        volumeMounts:
+        - name: gluetun-config
+          mountPath: /gluetun
+
+        # -- Connecting Other Containers --
+      # Define other containers that you want to connected to a VPN.
+      # When using Gluetun in a sidecar configuration, all other containers will use Gluetun's VPN connection.
+      # For testing purposes, you can `kubectl exec` into this curl container and run `curl https://ipinfo.io` to test your connection!
+
+      # - name: curl-container
+      #   image: quay.io/curl/curl:latest
+      #   command: ["sleep", "infinity"]
+
+      - name: movies
+        # https://github.com/linuxserver/docker-transmission/pkgs/container/transmission/versions?filters[version_type]=tagged
+        image: ghcr.io/linuxserver/transmission:4.0.6
+        env:
+        - name: PUID
+          value: "3000"
+        - name: PGID
+          value: "950"
+        - name: TZ
+          value: Etc/UTC
+        volumeMounts:
+        - name: movies-config
+          mountPath: /config
+        - name: biggusdiskus
+          mountPath: /data/biggusdiskus
+          mountPropagation: HostToContainer
+
+        ports:
+        - protocol: TCP
+          name: http-movies
+          containerPort: 9091
+
+      # - name: series
+      #   image: ghcr.io/linuxserver/transmission:4.0.6
+      #   env:
+      #   - name: PUID
+      #     value: "3000"
+      #   - name: PGID
+      #     value: "3000"
+      #   - name: TZ
+      #     value: Etc/UTC
+      #   volumeMounts:
+      #   - name: series-config
+      #     mountPath: /config
+      #   - name: biggusdiskus
+      #     mountPath: /data/biggusdiskus
+      #     mountPropagation: HostToContainer
+
+      #   ports:
+      #   - protocol: TCP
+      #     name: http-series
+      #     containerPort: 9092
+
+      volumes:
+      - name: gluetun-config
+        hostPath:
+          path: /hot-1/vault/gluetun
+          type: Directory
+      - name: movies-config
+        hostPath:
+          path: /hot-1/vault/transmission/movies/config
+          type: Directory
+      # - name: series-config
+      #   hostPath:
+      #     path: /hot-1/vault/transmission/series/config
+      #     type: Directory
+      - name: biggusdiskus
+        hostPath:
+          path: /warm-1/vault
+          type: Directory
