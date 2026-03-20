@@ -41,6 +41,22 @@
         "inherit permissions" = "yes";
         "inherit acls" = "yes";
       };
+
+      warm-1 = {
+        path = "/warm-1";
+        browseable = "yes";
+        "read only" = "no";
+        "guest ok" = "no";
+
+        "force user" = "data";
+        "force group" = "data";
+
+        "create mask" = "0660";
+        "directory mask" = "0770";
+
+        "inherit permissions" = "yes";
+        "inherit acls" = "yes";
+      };
     };
   };
 }
