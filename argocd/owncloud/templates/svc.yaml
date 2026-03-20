@@ -1,0 +1,16 @@
+# Source: app/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: owncloud
+  labels:
+    app.kubernetes.io/name: owncloud
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    protocol: TCP
+    name: https
+    targetPort: https
+  selector:
+    app.kubernetes.io/name: owncloud

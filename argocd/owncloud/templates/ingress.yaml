@@ -1,0 +1,28 @@
+# Source: app/templates/ingress_https.yaml
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: owncloud
+  labels:
+    app.kubernetes.io/name: owncloud
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`owncloud.jurabytes.net`)
+    kind: Rule
+    services:
+    - name: owncloud
+      port: 80
+      scheme: https
+      serversTransport: selfsignedhttps
+
+  tls:
+    certResolver: letsencrypt
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: selfsignedhttps
+spec:
+  insecureSkipVerify: true

@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: owncloud
+  labels:
+    app.kubernetes.io/name: owncloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: owncloud
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: owncloud
+    spec:
+      serviceAccountName: default
+      securityContext:
+        fsGroup: 950
+        fsGroupChangePolicy: OnRootMismatch
+        runAsGroup: 950
+        runAsNonRoot: true
+        runAsUser: 3000
+      containers:
+      - name: owncloud
+        securityContext:
+            # fsGroup: 950
+            # fsGroupChangePolicy: OnRootMismatch
+            runAsGroup: 950
+            runAsNonRoot: true
+            runAsUser: 3000
+        image: "owncloud/ocis:7.2.0"
+        imagePullPolicy: Always
+        ports:
+        - protocol: TCP
+          name: https
+          containerPort: 9200
+        env:
+        - name: OCIS_INSECURE
+          value: "true"
+        - name: OCIS_URL
+          value: https://owncloud.jurabytes.net
+        - name: PROXY_HTTP_ADDR
+          value: 0.0.0.0:9200
+        - name: OCIS_LOG_LEVEL
+          value: warn
+        - name: OCIS_HTTP_TLS_ENABLED
+          value: "false"
+        - name: OCIS_SERVICE_ACCOUNT_ID
+          value: 58170a68-9f82-11f0-a827-b7aa65958681
+        - name: OCIS_SERVICE_ACCOUNT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: secrets
+              key: sa_secret
+        livenessProbe:
+          httpGet:
+            path: /
+            port: https
+            scheme: HTTPS
+        readinessProbe:
+          httpGet:
+            path: /
+            port: https
+            scheme: HTTPS
+        volumeMounts:
+        - mountPath: /etc/ocis/ocis.yaml
+          name: config
+        - mountPath: /var/lib/ocis
+          name: data
+        - mountPath: /etc/letsencrypt
+          name: etc
+      volumes:
+      - hostPath:
+          path: /hot-1/apps/owncloud/ocis.yaml
+          type: File
+        name: config
+      - hostPath:
+          path: /hot-1/apps/owncloud/data
+          type: Directory
+        name: data
+      - hostPath:
+          path: /hot-1/apps/owncloud/letsencrypt/etc
+          type: Directory
+        name: etc
