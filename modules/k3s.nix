@@ -44,6 +44,11 @@ in
       createNamespace = true;
 
       values = {
+        service = {
+          spec = {
+            externalTrafficPolicy = "Local";
+          };
+        };
         additionalArguments = [
           "--entryPoints.websecure.http.tls.certResolver=letsencrypt"
           "--certificatesresolvers.letsencrypt.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
