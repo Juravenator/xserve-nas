@@ -42,6 +42,8 @@ spec:
     - name: whoami-service
       port: 80
     middlewares:
+    - name: internal-only
+      namespace: traefik
     - name: google-oauth
       namespace: traefik
   tls:
