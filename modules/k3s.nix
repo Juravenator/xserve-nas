@@ -101,6 +101,7 @@ in
               ipAllowList = {
                 sourceRange = [
                   "192.168.42.0/24"
+                  "10.42.0.0/16" # Pod IP range
                 ];
               };
             };
