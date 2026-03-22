@@ -7,7 +7,7 @@ let
 in {
   users.users.${user} = {
     isNormalUser = true;
-    extraGroups = ["wheel"];
+    extraGroups = ["wheel" "data"];
   };
 
   systemd.timers.${serviceName} = {
