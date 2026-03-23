@@ -22,6 +22,7 @@
         ../../modules/k3s.nix
         ../../modules/zerotier.nix
         ../../modules/samba.nix
+        ../../modules/dashboard.nix
         # ../../modules/zfs-sanoid.nix
     ];
 

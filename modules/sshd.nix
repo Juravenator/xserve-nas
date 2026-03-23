@@ -18,7 +18,6 @@
     port = 22;
   };
 
-  networking.firewall.allowedTCPPorts = [ 22 666 32400 32410 32412 32413 32414 ];
-  networking.firewall.allowedUDPPorts = [ 32400 32410 32412 32413 32414 ];
+  networking.firewall.allowedTCPPorts = [ 22 666 ];
   networking.firewall.enable = true;
 }
