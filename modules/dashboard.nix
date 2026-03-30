@@ -3,11 +3,11 @@
 let
   lcars-dashboard = pkgs.stdenv.mkDerivation {
     pname = "lcars-dashboard";
-    version = "0.1.9";
+    version = "0.1.11";
 
     src = pkgs.fetchzip {
-      url = "https://github.com/juravenator/lcars-dashboard/releases/download/v0.1.9/dashboard-api-x86_64-unknown-linux-musl.tar.xz";
-      sha256 = "sha256-2CVDWW+QdYgdq7MvMoEcoR9CyvMTMfq2XPu/BBJ7N4Y=";
+      url = "https://github.com/juravenator/lcars-dashboard/releases/download/v0.1.11/dashboard-api-x86_64-unknown-linux-musl.tar.xz";
+      sha256 = "sha256-DDgaHAZUoQq1CitTW/q3cswh314uE20ZkQP9UQErpMI=";
     };
 
     installPhase = ''
