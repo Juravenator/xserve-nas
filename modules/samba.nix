@@ -11,9 +11,15 @@
     isSystemUser = true;
   };
 
+  services.samba-wsdd = {
+    enable = true;
+    openFirewall = true;
+  };
+
   services.samba = {
     enable = true;
     openFirewall = true;
+    nmbd.enable = true;
 
     settings = {
       global = {
