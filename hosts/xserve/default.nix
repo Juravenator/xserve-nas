@@ -23,7 +23,7 @@
         ../../modules/zerotier.nix
         ../../modules/samba.nix
         ../../modules/dashboard.nix
-        # ../../modules/zfs-sanoid.nix
+        ../../modules/zfs-sanoid.nix
     ];
 
     # This option defines the first version of NixOS you have installed on this particular machine,

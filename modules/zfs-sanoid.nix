@@ -1,85 +1,93 @@
 { name, config, lib, pkgs, modulesPath, ... }:
 
-{
-  imports = [ ];
+let
+  mkSyncoid = import ./make-syncoid.nix { inherit lib pkgs; };
+in {
+  environment.systemPackages = with pkgs; [
+    smartmontools
+    sanoid
+  ];
 
-  systemd.timers.zfs-pvc-labels = {
-    wantedBy = [ "timers.target" ];
-    timerConfig = {
-        OnCalendar = "*-*-* *:00:00";
-        Unit = "zfs-pvc-labels.service";
-    };
-    before = ["sanoid.service"];
+  environment.etc."check-zpool-disks-active.sh" = {
+    mode = "0755";
+    source = ./sanoid/check-zpool-disks-active.sh;
   };
-  systemd.services.zfs-pvc-labels = {
-    script = ''
-      #!/usr/bin/env bash
-      set -o errexit -o nounset -o pipefail
-      IFS=$'\n\t\v'
 
-      zfs=${pkgs.zfs}/bin/zfs
-      jq=${pkgs.jq}/bin/jq
-      k3s=${pkgs.k3s}/bin/k3s
-
-      for dataset in $($zfs get -rj -t fs k8s:volume hot-1/openebs | $jq -r '.datasets | to_entries[] | select(.value.properties."k8s:volume".value == "-") | .key'); do
-          pvc_volume=$(cut -d/ -f4 <<< $dataset)
-          if [[ -z "$pvc_volume" ]]; then continue; fi
-          pvc_json=$($k3s kubectl get -A pvc -ojson | $jq ".items[] | select(.spec.volumeName==\"$pvc_volume\")")
-          if [[ -z "$pvc_json" ]]; then continue; fi
-          pvc_namespace=$($jq -r '.metadata.namespace' <<< $pvc_json)
-          pvc_name=$($jq -r '.metadata.name' <<< $pvc_json)
-
-          echo "pvc $pvc_volume -> $pvc_namespace::$pvc_name"
-          $zfs set "k8s:name=$pvc_name" "k8s:namespace=$pvc_namespace" "k8s:volume=$pvc_volume" $dataset
-      done
-    '';
+  systemd.services.sanoid = {
     serviceConfig = {
-      Type = "oneshot";
+      DynamicUser = lib.mkForce false;
+      User = lib.mkForce "root";
+      Group = lib.mkForce "root";
+      ExecStartPre = lib.mkForce [];
+      ExecStopPost = lib.mkForce [];
+
+      NoNewPrivileges = "yes";
+      PrivateTmp = "yes";
+      ProtectSystem = "strict";
+      ProtectHome = "yes";
+      RestrictAddressFamilies = "AF_UNIX";
     };
   };
 
   services.sanoid = {
     enable = true;
-    interval = "*-*-* *:00:00";
+    # https://www.freedesktop.org/software/systemd/man/latest/systemd.time.html#Calendar%20Events
+    interval = "*-*-* *:00:00"; # hourly
+
+    templates = {
+      "short-term" = {
+        autosnap = true;
+        autoprune = true;
+        pre_snapshot_script = "/etc/check-zpool-disks-active.sh";
+
+        hourly = 30;
+        daily = 10;
+        weekly = 4;
+        monthly = 0;
+        yearly = 0;
+      };
+      "long-term" = {
+        autosnap = true;
+        autoprune = true;
+        pre_snapshot_script = "/etc/check-zpool-disks-active.sh";
+
+        hourly = 30;
+        daily = 10;
+        weekly = 6;
+        monthly = 15;
+        yearly = 5;
+      };
+    };
 
     datasets = {
-        "zroot/data" = {
-            autosnap = true;
-            autoprune = true;
-            recursive = true;
-
-            hourly = 48;
-            daily = 7;
-            monthly = 0;
-            yearly = 0;
+        "hot-1" = {
+          useTemplate = ["long-term"];
+          recursive = true;
+        };
+        "warm-1/rips" = {
+          useTemplate = ["short-term"];
+          recursive = true;
+        };
+        "warm-1/vault" = {
+          useTemplate = ["short-term"];
+          recursive = true;
+        };
+        "cold-1" = {
+          useTemplate = ["long-term"];
+          recursive = true;
+        };
+        "cold-2" = {
+          useTemplate = ["long-term"];
+          recursive = true;
         };
     };
   };
 
-  # `zfs mount -a` needs to run on the remote host for this command to
-  # consider itself successful, even though all data was transferred.
-  services.syncoid = {
-    enable = true;
-    interval = "*-*-* *:00:00";
-    commands = {
-      "zroot/data" = {
-        target = "pawhost-test@192.168.193.19:speedy1/fluufff/test.pawhost.fluufff.org/data";
-        recursive = true;
-      };
-    };
-    sshKey = /data/syncoid/syncoid.key;
-    service = {
-      serviceConfig = {
-        BindReadOnlyPaths = [
-          "/data/syncoid"
-        ];
-      };
-    };
-  };
+  imports = [
+    (mkSyncoid "*-*-* 08,12,16,20:01:00" "hot-1" "warm-1/replicas/hot-1")
+    (mkSyncoid "*-*-* 08,12,16,20:01:00" "hot-1" "cold-1/replicas/hot-1")
+    (mkSyncoid "*-*-* 08,12,16,20:01:00" "warm-1/rips" "cold-1/replicas/warm-1/rips")
+    (mkSyncoid "*-*-* 08,12,16,20:01:00" "warm-1/vault" "cold-1/replicas/warm-1/vault")
+  ];
 
-  services.openssh = {
-    knownHosts = {
-      "192.168.193.19".publicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBJQzfnDaiVk1fyA+FA6LyKf5Y4N/AsFs+Lc3q8rIwxt";
-    };
-  };
 }
