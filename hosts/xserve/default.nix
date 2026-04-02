@@ -24,6 +24,7 @@
         ../../modules/samba.nix
         ../../modules/dashboard.nix
         ../../modules/zfs-sanoid.nix
+        ../../modules/zfs-scrub.nix
         ../../modules/fluufff-zfs.nix
     ];
 
