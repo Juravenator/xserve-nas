@@ -63,6 +63,22 @@
         "inherit permissions" = "yes";
         "inherit acls" = "yes";
       };
+
+      woofdisks = {
+        path = "/cold-1/replicas/woofdisks";
+        browseable = "yes";
+        "read only" = "no";
+        "guest ok" = "no";
+
+        "force user" = "data";
+        "force group" = "data";
+
+        "create mask" = "0660";
+        "directory mask" = "0770";
+
+        "inherit permissions" = "yes";
+        "inherit acls" = "yes";
+      };
     };
   };
 }
