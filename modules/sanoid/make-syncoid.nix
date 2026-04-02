@@ -1,4 +1,4 @@
-{ lib, pkgs }:
+{ lib, pkgs, check-zpool-active }:
 
 interval: source: target:
 
@@ -25,8 +25,8 @@ in {
       id
       which zpool
 
-      /etc/check-zpool-disks-active.sh ${source}
-      /etc/check-zpool-disks-active.sh ${target}
+      ${check-zpool-active}/bin/check-zpool-active ${source}
+      ${check-zpool-active}/bin/check-zpool-active ${target}
 
       ${pkgs.sanoid}/bin/syncoid -r --no-sync-snap --force-delete ${lib.escapeShellArgs [source target]}
     '';

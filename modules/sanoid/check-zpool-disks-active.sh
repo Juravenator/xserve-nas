@@ -2,11 +2,12 @@
 set -o errexit -o nounset -o pipefail
 IFS=$'\n\t\v,'
 
-SANOID_TARGETS=${SANOID_TARGETS:-$1}
+if [[ -z "${1:-}" ]]; then
+    >&2 echo "Usage $0 <pool>"
+    exit 1
+fi
 
-echo "SANOID_TARGETS=$SANOID_TARGETS"
-
-for pool in $SANOID_TARGETS; do
+for pool in $1; do
     pool=${pool%%/*}
     echo "checking pool $pool"
     for disk_path in $(zpool status -PL $pool | grep -o '/dev/[a-zA-Z0-9/\-]*'); do

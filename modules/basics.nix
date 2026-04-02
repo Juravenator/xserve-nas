@@ -46,6 +46,7 @@
     jq
     net-tools
     pv
+    sysstat
   ];
 
   # Copy the NixOS configuration file and link it from the resulting system
