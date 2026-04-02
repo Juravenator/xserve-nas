@@ -3,11 +3,11 @@
 let
   lcars-dashboard = pkgs.stdenv.mkDerivation {
     pname = "lcars-dashboard";
-    version = "0.1.11";
+    version = "0.1.17";
 
     src = pkgs.fetchzip {
-      url = "https://github.com/juravenator/lcars-dashboard/releases/download/v0.1.11/dashboard-api-x86_64-unknown-linux-musl.tar.xz";
-      sha256 = "sha256-DDgaHAZUoQq1CitTW/q3cswh314uE20ZkQP9UQErpMI=";
+      url = "https://github.com/juravenator/lcars-dashboard/releases/download/v0.1.17/dashboard-api-x86_64-unknown-linux-musl.tar.xz";
+      sha256 = "sha256-Iq3DRE59VH7EIrtoWTlY3bOnF3diMGCVhmWBb+13Pfs=";
     };
 
     installPhase = ''
@@ -18,7 +18,9 @@ let
   };
 in
 {
-  environment.systemPackages = [ lcars-dashboard ];
+  environment.systemPackages = [
+    lcars-dashboard
+  ];
 
   systemd.services.lcars-dashboard = {
     description = "LCARS Dashboard";
@@ -29,6 +31,7 @@ in
       pkgs.coreutils
       pkgs.gnugrep
       pkgs.smartmontools
+      pkgs.sysstat
     ];
 
     serviceConfig = {
