@@ -62,7 +62,7 @@ in
               redirections = {
                 entryPoint = {
                   to = "websecure";
-                  seche = "https";
+                  scheme = "https";
                   permanent = false;
                 };
               };
