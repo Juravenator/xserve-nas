@@ -1,0 +1,113 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: unifi
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: unifi
+  template:
+    metadata:
+      name: unifi
+      labels:
+        app.kubernetes.io/name: unifi
+    spec:
+      volumes:
+      - name: config
+        hostPath:
+          path: /hot-1/apps/unifi/config
+          type: Directory
+      containers:
+      - name: unifi
+        image: {{ .Values.image.unifi }}
+        ports:
+        {{- range $p := .Values.nodePorts }}
+        - name: {{ $p.name }}
+          containerPort: {{ $p.port }}
+          hostPort: {{ $p.port }}
+          protocol: TCP
+        {{- end }}
+        env:
+        - name: PUID
+          value: "950"
+        - name: PGID
+          value: "950"
+        - name: TZ
+          value: Etc/UTC
+        - name: MONGO_USER
+          value: unifi
+        - name: MONGO_PASS
+          value: unifi
+        - name: MONGO_HOST
+          value: unifi-db
+        - name: MONGO_PORT
+          value: "27017"
+        - name: MONGO_DBNAME
+          value: unifi
+        volumeMounts:
+        - name: config
+          mountPath: /config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi
+  labels:
+    app.kubernetes.io/name: unifi
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8443
+    protocol: TCP
+    name: web-https
+    targetPort: 8443
+  selector:
+    app.kubernetes.io/name: unifi
+---
+# {{- range $p := .Values.nodePorts }}
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: {{ $p.name }}
+#   labels:
+#     app.kubernetes.io/name: unifi
+# spec:
+#   type: NodePort
+#   ports:
+#   - port: {{ $p.port }}
+#     targetPort: {{ $p.port }}
+#     nodePort: {{ $p.nodePort }}
+#   selector:
+#     app.kubernetes.io/name: unifi
+# ---
+# {{- end }}
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: unifi
+  labels:
+    app.kubernetes.io/name: unifi
+spec:
+  entryPoints:
+  - websecure
+  routes:
+  - match: Host(`unifi.nest.jurabytes.net`)
+    kind: Rule
+    services:
+    - name: unifi
+      port: 8443
+      scheme: https
+      serversTransport: selfsignedhttps
+    middlewares:
+    - name: internal-only
+      namespace: traefik
+  tls:
+    certResolver: letsencrypt
+---
+apiVersion: traefik.io/v1alpha1
+kind: ServersTransport
+metadata:
+  name: selfsignedhttps
+spec:
+  insecureSkipVerify: true

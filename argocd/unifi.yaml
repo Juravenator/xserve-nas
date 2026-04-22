@@ -1,0 +1,28 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: &name unifi
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: "https://github.com/juravenator/xserve-nas.git"
+    targetRevision: stable
+    path: argocd/unifi
+    helm:
+      releaseName: *name
+  destination:
+    server: "https://kubernetes.default.svc"
+    namespace: *name
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - RespectIgnoreDifferences=true
+  ignoreDifferences:
+  - group: apps
+    kind: StatefulSets
+    jsonPointers:
+    - /spec/replicas

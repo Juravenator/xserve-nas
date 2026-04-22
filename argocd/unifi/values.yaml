@@ -1,0 +1,27 @@
+image:
+  unifi: lscr.io/linuxserver/unifi-network-application:9.5.21
+  # Starting with version 8.1 of mongodb Network Application, mongodb 3.6 through 7.0 are supported.
+  mongo: docker.io/mongo:4.4
+
+nodePorts:
+- name: stun
+  port: 3478
+  nodePort: 30001
+- name: web-http
+  port: 8080
+  nodePort: 30002
+# - name: web-https
+#   port: 8443
+#   nodePort: 30003
+# - name: guest-https
+#   port: 8843
+#   nodePort: 30004
+# - name: guest-http
+#   port: 8880
+#   nodePort: 30005
+- name: speedtest
+  port: 6789
+  nodePort: 30006
+- name: syslog
+  port: 5514
+  nodePort: 30007

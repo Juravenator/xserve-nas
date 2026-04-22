@@ -1,0 +1,49 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mongodb
+  template:
+    metadata:
+      name: mongodb
+      labels:
+        app.kubernetes.io/name: mongodb
+    spec:
+      volumes:
+      - name: db
+        hostPath:
+          path: /hot-1/apps/unifi/db
+          type: Directory
+      - name: init-mongo
+        hostPath:
+          path: /hot-1/apps/unifi/init-mongo.js
+          type: File
+      containers:
+      - name: mongodb
+        image: {{ .Values.image.mongo }}
+        volumeMounts:
+        - name: db
+          mountPath: /data/db
+        - name: init-mongo
+          mountPath: /docker-entrypoint-initdb.d/init-mongo.js
+          readOnly: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: unifi-db
+  labels:
+    app.kubernetes.io/name: mongodb
+spec:
+  type: ClusterIP
+  ports:
+  - port: 27017
+    protocol: TCP
+    name: mongodb
+    targetPort: 27017
+  selector:
+    app.kubernetes.io/name: mongodb
