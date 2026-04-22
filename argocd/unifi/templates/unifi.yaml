@@ -65,23 +65,6 @@ spec:
   selector:
     app.kubernetes.io/name: unifi
 ---
-# {{- range $p := .Values.nodePorts }}
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: {{ $p.name }}
-#   labels:
-#     app.kubernetes.io/name: unifi
-# spec:
-#   type: NodePort
-#   ports:
-#   - port: {{ $p.port }}
-#     targetPort: {{ $p.port }}
-#     nodePort: {{ $p.nodePort }}
-#   selector:
-#     app.kubernetes.io/name: unifi
-# ---
-# {{- end }}
 apiVersion: traefik.io/v1alpha1
 kind: IngressRoute
 metadata:

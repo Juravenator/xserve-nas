@@ -1,5 +1,5 @@
 image:
-  unifi: lscr.io/linuxserver/unifi-network-application:9.5.21
+  unifi: lscr.io/linuxserver/unifi-network-application:10.3.55
   # Starting with version 8.1 of mongodb Network Application, mongodb 3.6 through 7.0 are supported.
   mongo: docker.io/mongo:4.4
 
