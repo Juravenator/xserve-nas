@@ -25,3 +25,14 @@ nodePorts:
 - name: syslog
   port: 5514
   nodePort: 30007
+
+APs:
+- name: master-bedroom
+  ip: 192.168.42.243
+  schedule: 0 1 * * * # 1AM
+- name: living
+  ip: 192.168.42.71
+  schedule: 0 3 * * * # 3AM
+- name: garden
+  ip: 192.168.42.66
+  schedule: 0 1 * * * # 1AM

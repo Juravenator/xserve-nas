@@ -1,0 +1,35 @@
+{{- range $p := .Values.APs }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: reboot-{{ $p.name }}
+spec:
+  schedule: {{ $p.schedule }}
+  jobTemplate:
+    metadata:
+      name: reboot-{{ $p.name }}
+    spec:
+      template:
+        metadata: {}
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - image: alpine/git
+            name: reboot
+            command: ["ssh"]
+            args:
+            - -i/etc/secrets/ssh-key/private
+            - -oStrictHostKeyChecking=accept-new
+            - Juravenator@{{ $p.ip }}
+            - reboot
+            volumeMounts:
+            - name: ssh-key
+              mountPath: /etc/secrets/ssh-key
+              readOnly: true
+          volumes:
+          - name: ssh-key
+            secret:
+              secretName: ssh-key
+              defaultMode: 0400
+---
+{{- end }}
