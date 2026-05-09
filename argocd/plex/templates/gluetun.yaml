@@ -19,7 +19,7 @@ spec:
       containers:
       - name: gluetun
         # https://github.com/qdm12/gluetun/pkgs/container/gluetun/versions?filters%5Bversion_type%5D=tagged
-        image: ghcr.io/qdm12/gluetun:v3.40.0
+        image: ghcr.io/qdm12/gluetun:v3.41.1
         imagePullPolicy: Always
         securityContext:
           capabilities:
@@ -33,30 +33,47 @@ spec:
         - name: TZ
           value: Europe/London
 
+        # ProtonVPN
         - name: VPN_SERVICE_PROVIDER
-          value: nordvpn
-
+          value: protonvpn
         - name: VPN_TYPE
           value: wireguard
-
         - name: WIREGUARD_PRIVATE_KEY
           valueFrom:
             secretKeyRef:
-              name: nordvpn
+              name: protonvpn
               key: private-key
+        - name: PORT_FORWARD_ONLY
+          value: "on"
+        - name: VPN_PORT_FORWARDING
+          value: "on"
+        - name: VPN_PORT_FORWARDING_STATUS_FILE
+          value: /tmp/gluetun/forwarded_port
 
-        - name: SERVER_CATEGORIES
-          value: P2P
-
-        - name: SERVER_COUNTRIES
-          value: Switzerland
+        # # NordVPN
+        # - name: VPN_SERVICE_PROVIDER
+        #   value: nordvpn
+        # - name: VPN_TYPE
+        #   value: wireguard
+        # - name: WIREGUARD_PRIVATE_KEY
+        #   valueFrom:
+        #     secretKeyRef:
+        #       name: nordvpn
+        #       key: private-key
+        # - name: SERVER_CATEGORIES
+        #   value: P2P
+        # - name: SERVER_COUNTRIES
+        #   value: Switzerland
 
         - name: FIREWALL_INPUT_PORTS
+          # value: "9091"
           value: 9091,9092
 
         volumeMounts:
         - name: gluetun-config
           mountPath: /gluetun
+        - name: port-forwarding
+          mountPath: /tmp/gluetun
 
         # -- Connecting Other Containers --
       # Define other containers that you want to connected to a VPN.
@@ -69,7 +86,7 @@ spec:
 
       - name: movies
         # https://github.com/linuxserver/docker-transmission/pkgs/container/transmission/versions?filters[version_type]=tagged
-        image: ghcr.io/linuxserver/transmission:4.0.6
+        image: &img-transmission ghcr.io/linuxserver/transmission:4.1.1
         env:
         - name: PUID
           value: "3000"
@@ -89,28 +106,37 @@ spec:
           name: http-movies
           containerPort: 9091
 
-      # - name: series
-      #   image: ghcr.io/linuxserver/transmission:4.0.6
-      #   env:
-      #   - name: PUID
-      #     value: "3000"
-      #   - name: PGID
-      #     value: "3000"
-      #   - name: TZ
-      #     value: Etc/UTC
-      #   volumeMounts:
-      #   - name: series-config
-      #     mountPath: /config
-      #   - name: biggusdiskus
-      #     mountPath: /data/biggusdiskus
-      #     mountPropagation: HostToContainer
+      - name: movies-port-forward
+        image: *img-transmission
+        command: ["/bin/sh"]
+        args:
+          - "-c"
+          - |
+            echo -n "Waiting"
 
-      #   ports:
-      #   - protocol: TCP
-      #     name: http-series
-      #     containerPort: 9092
+            while [ ! -s /tmp/gluetun/forwarded_port ]; do
+              echo -n "."
+              sleep 10s
+            done
+            echo ""
+
+            echo "Port forwarding data received"
+            cat /tmp/gluetun/forwarded_port
+
+            echo "Configuring port"
+            transmission-remote localhost -p "$(cat /tmp/gluetun/forwarded_port)"
+            echo "Updating transmission"
+            # transmission-remote localhost -t all --reannounce
+            echo "Done"
+            sleep infinity
+        volumeMounts:
+        - name: port-forwarding
+          mountPath: /tmp/gluetun
 
       volumes:
+      - name: port-forwarding
+        emptyDir:
+          medium: Memory
       - name: gluetun-config
         hostPath:
           path: /hot-1/vault/gluetun
