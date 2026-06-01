@@ -84,5 +84,8 @@ spec:
     services:
     - name: transmission
       port: http
+    middlewares:
+    - name: internal-only
+      namespace: traefik
   tls:
     certResolver: letsencrypt
