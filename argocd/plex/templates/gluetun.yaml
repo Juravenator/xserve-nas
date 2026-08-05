@@ -90,7 +90,7 @@ spec:
       #   image: quay.io/curl/curl:latest
       #   command: ["sleep", "infinity"]
 
-      - name: movies
+      - name: transmission
         # https://github.com/linuxserver/docker-transmission/pkgs/container/transmission/versions?filters[version_type]=tagged
         image: &img-transmission ghcr.io/linuxserver/transmission:4.1.1
         env:
@@ -101,7 +101,7 @@ spec:
         - name: TZ
           value: Etc/UTC
         volumeMounts:
-        - name: movies-config
+        - name: transmission-config
           mountPath: /config
         - name: biggusdiskus
           mountPath: /data/biggusdiskus
@@ -109,10 +109,10 @@ spec:
 
         ports:
         - protocol: TCP
-          name: http-movies
+          name: http-transmission
           containerPort: 9091
 
-      - name: movies-port-forward
+      - name: transmission-port-forward
         image: *img-transmission
         command: ["/bin/sh"]
         args:
@@ -147,7 +147,7 @@ spec:
         hostPath:
           path: /hot-1/vault/gluetun
           type: Directory
-      - name: movies-config
+      - name: transmission-config
         hostPath:
           path: /hot-1/vault/transmission/movies/config
           type: Directory
