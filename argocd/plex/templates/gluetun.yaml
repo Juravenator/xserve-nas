@@ -109,7 +109,7 @@ spec:
 
         ports:
         - protocol: TCP
-          name: http-transmission
+          name: web-ui
           containerPort: 9091
 
       - name: transmission-port-forward
