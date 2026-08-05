@@ -6,6 +6,7 @@ metadata:
     app: gluetun
 spec:
   replicas: 1
+  revisionHistoryLimit: 1
   strategy:
     type: Recreate
   selector:
