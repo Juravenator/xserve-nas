@@ -28,6 +28,12 @@ spec:
         # ports:
         # - containerPort: 8080
 
+        # https://github.com/qdm12/gluetun-wiki/blob/main/setup/advanced/kubernetes.md#adding-ipv6-rule--file-exists
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "(ip rule del table 51820; ip -6 rule del table 51820) || true"]
+
         # Adapt the following environment variables to suit your needs and VPN provider
         env:
         - name: TZ
