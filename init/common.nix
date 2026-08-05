@@ -3,7 +3,7 @@
   lib,
   pkgs,
   ...
-} @ args:
+}@args:
 {
   imports = [
     ../modules/systemd-boot.nix
@@ -22,14 +22,22 @@
     ports = [ 666 ];
   };
 
-  nix.settings.trusted-users = [ "root" "@wheel" "cicd" ];
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.trusted-users = [
+    "root"
+    "@wheel"
+    "cicd"
+  ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
 
-  users.users.root.openssh.authorizedKeys.keys =
-  [
+  users.users.root.openssh.authorizedKeys.keys = [
     "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIH4TfYrgjcXZd0q55fWHQqSwrGX8JwkF8kwUUNxj5wFA jura@juras-framework-12"
     "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC7Dn6N1vrwCLaHpMl60f5wifem27Cz/ZiH8/8zCwVYKVzKmKhu7DTlqu5Aark0OEvNLbWzzE3LBaO91l5yhuAZUB5lNZ3CIO/PfgKwux0szuY0xrMHToW/mTX04WJ60mGHKR23MacAEteInU1X6DBzjB/81yym/PxqezPy5iLtEvPicnwlbRcjqfxYu2CIxLbf0PPES+1G+zL1L8x1OYcE1k9gTnYtw6jyrBND8ZY9ach2Fu6cIveOs/gXQYCQw7Bq/Hsbr9Oobnurv/SiJjxmajFo46Ch+FVDRPeTWvONKqXu/ob8rtcojYKIT8r4lFBAl6pWx+7Ztdh+HROBHN8Z glenn@Glenns-MacBook-Pro.local"
-  ] ++ (args.extraPublicKeys or []); # this is used for unit-testing this module and can be removed if not needed
+    "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICfKexmO90qYgyI4T53UH4vuGxRPFLbVYn8N+LP9AvOe jura@Glenns-MacBook-Pro.local"
+  ]
+  ++ (args.extraPublicKeys or [ ]); # this is used for unit-testing this module and can be removed if not needed
   security.sudo.wheelNeedsPassword = false;
 
   # This option defines the first version of NixOS you have installed on this particular machine,
