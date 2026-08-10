@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: server
+  name: plex
   namespace: plex
 spec:
-  serviceName: server
+  serviceName: plex
   selector:
     matchLabels:
       app.kubernetes.io/name: plex-media-server
