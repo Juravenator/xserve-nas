@@ -8,22 +8,21 @@
       meta = {
         nixpkgs = import nixpkgs {
           system = "x86_64-linux";
-          overlays = [];
+          overlays = [ ];
         };
       };
 
       xserve = ./hosts/xserve;
     };
 
-
     # Allows running: nix run .#colmena
     packages.x86_64-linux.colmena = colmena.packages.x86_64-linux.colmena;
+    packages.aarch64-darwin.colmena = colmena.packages.aarch64-darwin.colmena;
 
     # Optional dev shell: nix develop
-    devShells.x86_64-linux.default =
-      nixpkgs.legacyPackages.x86_64-linux.mkShell {
-        packages = [ colmena.packages.x86_64-linux.colmena ];
-      };
+    devShells.x86_64-linux.default = nixpkgs.legacyPackages.x86_64-linux.mkShell {
+      packages = [ colmena.packages.x86_64-linux.colmena ];
+    };
 
   };
 }
