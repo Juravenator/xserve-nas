@@ -1,0 +1,94 @@
+frigate:
+  image:
+    tag: 0.17.2
+  persistence:
+    config:
+      enabled: true
+      ephemeralWritableConfigYaml: true
+      storageClass: zfs-local-warm-1
+    media:
+      enabled: true
+      storageClass: zfs-local-warm-1
+      skipuninstall: true
+      size: 2Ti
+  envFromSecrets:
+    - cams
+
+  # # Pod level
+  # # https://kubernetes.io/docs/reference/kubernetes-api/core/pod-v1/#PodSecurityContext
+  # podSecurityContext:
+  #   fsGroup: 1000
+  #   fsGroupChangePolicy: OnRootMismatch
+  #   supplementalGroupsPolicy: Strict
+  # # Container level
+  # # https://kubernetes.io/docs/reference/kubernetes-api/core/pod-v1/#SecurityContext
+  # securityContext:
+  #   # runAsNonRoot: true
+  #   # runAsUser: 1000
+  #   # runAsGroup: 1000
+  #   privileged: false
+  #   # allowPrivilegeEscalation: false
+  #   # readOnlyRootFilesystem: true
+  #   # seccompProfile:
+  #   #   type: RuntimeDefault
+  #   # capabilities:
+  #   #   drop: ["ALL"]
+  #   #   add: []
+
+  extraVolumes:
+    - name: run
+      emptyDir:
+        medium: Memory
+        sizeLimit: 1Gi
+  extraVolumeMounts:
+    - name: run
+      mountPath: /run
+
+  config: |
+    mqtt:
+      enabled: false
+    detect:
+      enabled: false
+    record:
+      enabled: True
+      continuous:
+        days: 14
+      alerts:
+        # Number of seconds before the alert to include
+        pre_capture: 5
+        # Number of seconds after the alert to include
+        post_capture: 5
+        retain:
+          days: 400
+          mode: all
+      detections:
+        # Number of seconds before the alert to include
+        pre_capture: 5
+        # Number of seconds after the alert to include
+        post_capture: 5
+        retain:
+          days: 400
+          mode: all
+    snapshots:
+      enabled: true
+      retain:
+        # Default retention days
+        default: 100
+    cameras:
+      entrance:
+        enabled: true
+        ffmpeg:
+          inputs:
+            # High resolution stream
+            - path: rtsp://{FRIGATE_CAM_ENTRANCE_USER}:{FRIGATE_CAM_ENTRANCE_PASS}@192.168.42.217:554/Preview_01_main
+              roles:
+                - record
+            # Low resolution stream
+            - path: rtsp://{FRIGATE_CAM_ENTRANCE_USER}:{FRIGATE_CAM_ENTRANCE_PASS}@192.168.42.217:554/Preview_01_sub
+              roles:
+                - detect
+        detect:
+          enabled: false
+          width: 640
+          height: 360
+          fps: 5
