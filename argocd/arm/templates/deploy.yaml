@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: arm
+  labels:
+    app.kubernetes.io/name: arm
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: arm
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: arm
+    spec:
+      containers:
+        - name: arm
+          image: automaticrippingmachine/automatic-ripping-machine:2.24.3
+          imagePullPolicy: Always
+          securityContext:
+            privileged: true
+          env:
+            - name: ARM_UID
+              value: "3000"
+            - name: ARM_GID
+              value: "950"
+          ports:
+            - protocol: TCP
+              name: http
+              containerPort: 8080
+          volumeMounts:
+            - mountPath: /dev
+              name: dev
+            - mountPath: /tmp
+              name: tmp
+            - mountPath: /home/arm
+              name: arm
+            - mountPath: /etc/arm/config
+              name: config
+      volumes:
+        - name: dev
+          hostPath:
+            path: /dev
+            type: Directory
+        - name: tmp
+          emptyDir:
+            medium: Memory
+        - name: arm
+          hostPath:
+            path: /warm-1/rips
+        - name: config
+          hostPath:
+            path: /warm-1/rips/config

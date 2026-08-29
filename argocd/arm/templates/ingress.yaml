@@ -1,0 +1,18 @@
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: arm
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`arm.nest.jurabytes.net`)
+      kind: Rule
+      services:
+        - name: arm
+          port: http
+      middlewares:
+        - name: internal-only
+          namespace: traefik
+  tls:
+    certResolver: letsencrypt

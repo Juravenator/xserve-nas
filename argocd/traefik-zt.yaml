@@ -1,0 +1,36 @@
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: traefik2-zerotier
+#   namespace: traefik
+# spec:
+#   type: LoadBalancer
+#   allocateLoadBalancerNodePorts: true
+#   # externalIPs:
+#   # - 192.168.192.92
+#   externalTrafficPolicy: Local
+#   internalTrafficPolicy: Cluster
+#   ports:
+#     - name: ztweb
+#       port: 80
+#       protocol: TCP
+#       targetPort: ztweb
+#     - name: ztwebsecure
+#       port: 443
+#       protocol: TCP
+#       targetPort: ztwebsecure
+#     - name: ztssh
+#       port: 22
+#       protocol: TCP
+#       targetPort: ztssh
+#   selector:
+#     app.kubernetes.io/instance: traefik2-traefik
+#     app.kubernetes.io/name: traefik
+#   sessionAffinity: None
+
+# # kubectl -n traefik patch svc traefik2-zerotier --subresource=status --type=merge -p '{"status":{"loadBalancer":{"ingress":[{"ip":"192.168.192.92"}]}}}'
+# # status:
+# #   loadBalancer:
+# #     ingress:
+# #       ip: 192.168.192.92
+# #       ipMode: VIP
