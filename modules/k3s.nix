@@ -48,6 +48,20 @@ in
           spec = {
             externalTrafficPolicy = "Local";
           };
+          # Uses deprecated fields. But is also still used by the main service.
+          # See what alternative is used on chart upgrade.
+          # https://kubernetes.io/blog/2026/05/14/kubernetes-v1-36-deprecation-and-removal-of-service-externalips/#alternative-LoadBalancer
+          additionalServices = {
+            zerotier = {
+              spec = {
+                type = "LoadBalancer";
+
+                externalIPs = [
+                  "192.168.192.92"
+                ];
+              };
+            };
+          };
         };
         additionalArguments = [
           "--entryPoints.websecure.http.tls.certResolver=letsencrypt"
@@ -66,6 +80,32 @@ in
                   permanent = false;
                 };
               };
+            };
+          };
+          ztweb = {
+            port = 8001;
+            exposedPort = 80;
+            expose = {
+              default = false;
+              zerotier = true;
+            };
+          };
+          ztwebsecure = {
+            port = 8002;
+            exposedPort = 443;
+            expose = {
+              default = false;
+              zerotier = true;
+            };
+          };
+          ztssh = {
+            port = 8022;
+            exposedPort = 22;
+            protocol = "TCP";
+
+            expose = {
+              default = false;
+              zerotier = true;
             };
           };
         };
