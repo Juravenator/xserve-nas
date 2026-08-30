@@ -11,5 +11,9 @@ spec:
       protocol: TCP
       name: http
       targetPort: http
+    - port: 22
+      protocol: TCP
+      name: ssh
+      targetPort: ssh
   selector:
     app.kubernetes.io/name: gitea
