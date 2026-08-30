@@ -18,4 +18,8 @@
       fi
     '';
   };
+
+  boot.extraModprobeConfig = ''
+    options zfs zfs_arc_max=34359738368
+  '';
 }
