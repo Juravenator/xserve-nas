@@ -19,19 +19,19 @@ spec:
     spec:
       serviceAccountName: default
       securityContext:
-        fsGroup: 1000
+        fsGroup: 950
         fsGroupChangePolicy: OnRootMismatch
-        runAsGroup: 1000
+        runAsGroup: 950
         runAsNonRoot: true
-        runAsUser: 1000
+        runAsUser: 3000
       containers:
         - name: gitea
           image: docker.gitea.com/gitea:1.27.2-rootless
           imagePullPolicy: Always
           securityContext:
-            runAsGroup: 1000
+            runAsGroup: 950
             runAsNonRoot: true
-            runAsUser: 1000
+            runAsUser: 3000
             capabilities:
               drop: [ALL]
           env:
@@ -70,11 +70,13 @@ spec:
               name: tmp
       volumes:
         - name: config
-          persistentVolumeClaim:
-            claimName: config
+          hostPath:
+            path: /hot-1/vault/cowtea/config
+            type: Directory
         - name: data
-          persistentVolumeClaim:
-            claimName: data
+          hostPath:
+            path: /hot-1/vault/cowtea/data
+            type: Directory
         - name: tmp
           emptyDir:
             medium: Memory
