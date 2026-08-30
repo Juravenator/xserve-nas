@@ -7,7 +7,7 @@
 }:
 
 let
-  sanoid-shell = pkgs.writeShellScriptBin "fluufff-sanoid-restricted-shell" ''
+  sanoid-shell = pkgs.writeShellScriptBin "floere-sanoid-restricted-shell" ''
     #!/usr/bin/env bash
     set -o errexit -o nounset -o pipefail
 
@@ -19,7 +19,7 @@ let
       exit 1
     fi
 
-    valid_dataset="hot-1/replicas/test.pawhost.fluufff.org"
+    valid_dataset="hot-1/vault/cowtea"
 
     allowed=false
 
@@ -34,7 +34,7 @@ let
     if [[ "$@" == "zfs get "* ]] && [[ "$@" == *"$valid_dataset"* ]]; then
       allowed=true
     fi
-    if [[ "$@" == "  zfs receive "* ]] && [[ "$@" == *"$valid_dataset"* ]]; then
+    if [[ "$@" == "  zfs send "* ]] && [[ "$@" == *"$valid_dataset"* ]]; then
       allowed=true
     fi
 
@@ -56,20 +56,14 @@ in
 {
   imports = [ ];
 
-  services.zerotierone = {
-    joinNetworks = [
-      "68bea79acfeca5af"
-    ];
-  };
-
-  users.users.pawhost-test = {
+  users.users.floere = {
     isNormalUser = true;
-    shell = "${sanoid-shell}/bin/fluufff-sanoid-restricted-shell";
+    shell = "${sanoid-shell}/bin/floere-sanoid-restricted-shell";
     useDefaultShell = false;
     openssh = {
       authorizedKeys = {
         keys = [
-          "no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-user-rc,restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBETdBupEy69aDwqcKpfI7Om31k7iVbnJGJ9AhGgC2eB"
+          "no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-user-rc,restrict ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIHojDNIrtqi9L1sCfqVYrhjpB+Pf3SFKDmfP3q2vVcJm"
         ];
       };
     };
