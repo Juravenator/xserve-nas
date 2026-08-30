@@ -69,6 +69,13 @@ in
           "--certificatesresolvers.letsencrypt.acme.email=glenn.dirkx@gmail.com"
           "--certificatesresolvers.letsencrypt.acme.httpChallenge.entryPoint=web"
           "--certificatesresolvers.letsencrypt.acme.storage=/data/acme.json"
+
+          "--entryPoints.ztwebsecure.http.tls.certResolver=letsencrypt-dns"
+          "--certificatesresolvers.letsencrypt-dns.acme.caServer=https://acme-v02.api.letsencrypt.org/directory"
+          "--certificatesresolvers.letsencrypt-dns.acme.email=glenn.dirkx@gmail.com"
+          "--certificatesresolvers.letsencrypt-dns.acme.dnschallenge=true"
+          "--certificatesresolvers.letsencrypt-dns.acme.dnschallenge.provider=namecheap"
+          "--certificatesresolvers.letsencrypt-dns.acme.storage=/data/acme-dns.json"
         ];
         ports = {
           web = {
@@ -88,6 +95,15 @@ in
             expose = {
               default = false;
               zerotier = true;
+            };
+            http = {
+              redirections = {
+                entryPoint = {
+                  to = "ztwebsecure";
+                  scheme = "https";
+                  permanent = false;
+                };
+              };
             };
           };
           ztwebsecure = {
@@ -129,6 +145,13 @@ in
             allowCrossNamespace = true;
           };
         };
+        envFrom = [
+          {
+            secretRef = {
+              name = "namecheap";
+            };
+          }
+        ];
         extraObjects = [
           {
             apiVersion = "traefik.io/v1alpha1";
